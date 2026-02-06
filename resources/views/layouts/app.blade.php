@@ -4,31 +4,57 @@
     <meta charset="UTF-8">
     <title>@yield('title')</title>
 
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        body {
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 260px;
+            min-height: 100vh;
+        }
+        .content-wrapper {
+            height: 100vh;
+            overflow-y: auto;
+        }
+    </style>
 </head>
+
+@php
+    $isProfile = request()->routeIs('user.profile.*');
+@endphp
 
 <body class="bg-light">
 
+<div class="d-flex">
+
     {{-- SIDEBAR --}}
-    <aside class="position-fixed top-0 start-0 bg-dark text-white"
-           style="width:260px; height:100vh; z-index:1040;">
-        <x-sidebar role="{{ auth()->user()->role }}" />
-    </aside>
+    @unless($isProfile)
+        <aside class="sidebar bg-dark text-white">
+            <x-sidebar role="{{ auth()->user()->role }}" />
+        </aside>
+    @endunless
 
-    {{-- TOPBAR (FIXED) --}}
-    <header class="position-fixed top-0 bg-white border-bottom shadow-sm"
-            style="left:260px; right:0; height:64px; z-index:1030;">
-        @include('layouts.topbar')
-    </header>
+    {{-- MAIN CONTENT --}}
+    <div class="flex-fill d-flex flex-column">
 
-    {{-- CONTENT WRAPPER --}}
-    <div style="margin-left:260px; margin-top:64px;">
-        <main class="p-4 min-vh-100">
+        {{-- TOPBAR --}}
+        <header class="bg-white border-bottom shadow-sm">
+            @include('layouts.topbar')
+        </header>
+
+        {{-- PAGE CONTENT --}}
+        <main class="content-wrapper p-4">
             @yield('content')
         </main>
+
     </div>
 
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
