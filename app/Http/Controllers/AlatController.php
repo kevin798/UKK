@@ -85,10 +85,17 @@ class AlatController extends Controller
         }
     }
 
-    public function userList()
+    public function userList(Request $request)
     {
-        $alat = Alat::with('kategori')->latest()->get();
-        return view('user.alat-list', compact('alat'));
+        $kategori = Kategori::all();
+        $query = Alat::with('kategori');
+
+        if ($request->has('kategori_id') && $request->kategori_id) {
+            $query->where('kategori_id', $request->kategori_id);
+        }
+
+        $alat = $query->latest()->get();
+        return view('user.alat-list', compact('alat', 'kategori'));
     }
 }
 

@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PetugasController;
@@ -14,7 +13,6 @@ use App\Http\Controllers\PeminjamController;
 use App\Http\Controllers\ActivityLogController;
 
 Route::redirect('/', '/auth/login');
-
 
 Route::middleware(['guest'])->group(function () {
     Route::prefix('auth')->group(function () {
@@ -30,12 +28,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('auth/logout', [AuthController::class, 'logout'])->name('logout');
 
-
     Route::middleware(['role:admin'])->group(function () {
 
         Route::get('admin/dashboard', [AdminController::class, 'showDashboard'])
             ->name('admin.dashboard');
-
 
         Route::resource('alat', AlatController::class);
 
@@ -54,6 +50,7 @@ Route::middleware(['auth'])->group(function () {
                 ->name('admin.peminjam.delete');
 
             Route::prefix('petugas')->group(function () {
+
                 Route::get('/', [UserController::class, 'petugasList'])
                     ->name('admin.petugas');
 
@@ -63,13 +60,13 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('/create', [UserController::class, 'createPetugas'])
                     ->name('admin.petugas.store');
 
-                Route::get('/edit/{id}', [UserController::class, 'editPetugasForm'])
+                Route::get('/edit/{user}', [UserController::class, 'editPetugasForm'])
                     ->name('admin.petugas.edit');
 
-                Route::put('/update', [UserController::class, 'updatePetugas'])
+                Route::put('/update/{user}', [UserController::class, 'updatePetugas'])
                     ->name('admin.petugas.update');
 
-                Route::delete('/delete/{id}', [UserController::class, 'deletePetugas'])
+                Route::delete('/delete/{user}', [UserController::class, 'deletePetugas'])
                     ->name('admin.petugas.delete');
             });
 
@@ -98,12 +95,12 @@ Route::middleware(['auth'])->group(function () {
             ->name('petugas.peminjaman.return');
     });
 
-
     Route::middleware(['role:user'])->group(function () {
 
         Route::get('user/dashboard', [PeminjamController::class, 'showDashboard'])
             ->name('user.dashboard');
-            Route::get('user/log-aktivitas', [ActivityLogController::class, 'index'])
+
+        Route::get('user/log-aktivitas', [ActivityLogController::class, 'index'])
             ->name('log.aktivitas');
 
         Route::get('user/profile/edit', [ProfileController::class, 'edit'])
@@ -112,7 +109,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('user/profile', [ProfileController::class, 'update'])
             ->name('user.profile.update');
 
-        Route::get('user/alat', [AlatController::class, 'index'])
+        Route::get('user/alat', [AlatController::class, 'userList'])
             ->name('user.alat-list');
 
         Route::get('user/peminjaman', [PeminjamanController::class, 'index'])
@@ -130,5 +127,4 @@ Route::middleware(['auth'])->group(function () {
         Route::get('user/users', [UserController::class, 'userList'])
             ->name('user.users');
     });
-
 });

@@ -14,11 +14,11 @@ class AdminController extends Controller
         $totalPeminjam = User::where('role', 'user')->count();
         $totalPetugas = User::where('role', 'petugas')->count();
         $totalAlat = Alat::count();
-        
+
         $alatTersedia = Alat::sum('jumlah');
-        
+
         $peminjamanAktif = Peminjaman::where('status', 'approved')->count();
-        
+
         return view('admin.dasboard', compact(
             'totalPeminjam',
             'totalPetugas',

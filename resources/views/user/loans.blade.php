@@ -14,7 +14,7 @@
 
     <!-- ALERT SUCCESS -->
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show">
             <i class="bi bi-check-circle me-2"></i>
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -23,7 +23,7 @@
 
     <!-- ALERT ERROR -->
     @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show">
             <i class="bi bi-exclamation-circle me-2"></i>
             <strong>Terjadi Kesalahan</strong>
             <ul class="mb-0 mt-2">
@@ -51,14 +51,35 @@
                     <form method="POST" action="{{ route('user.peminjaman.store') }}">
                         @csrf
 
-                        <!-- ALAT -->
+                        <!-- KATEGORI -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Kategori</label>
+                            <select name="kategori_id" id="kategori_id"
+                                class="form-select @error('kategori_id') is-invalid @enderror"
+                                required>
+                                <option value="">-- Pilih Kategori --</option>
+                                @foreach($kategori as $kat)
+                                    <option value="{{ $kat->id }}"
+                                        @selected(old('kategori_id') == $kat->id)>
+                                        {{ $kat->nama }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('kategori_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- ALAT (DISABLED SEBELUM PILIH KATEGORI) -->
                         <div class="mb-3">
                             <label class="form-label fw-medium">Nama Alat</label>
-                            <select name="alat_id"
-                                class="form-select @error('alat_id') is-invalid @enderror" required>
+                            <select name="alat_id" id="alat_id"
+                                class="form-select @error('alat_id') is-invalid @enderror"
+                                disabled required>
                                 <option value="">-- Pilih Alat --</option>
                                 @foreach($alats as $alat)
-                                    <option value="{{ $alat->id }}" @selected(old('alat_id') == $alat->id)>
+                                    <option value="{{ $alat->id }}"
+                                        @selected(old('alat_id') == $alat->id)>
                                         {{ $alat->nama ?? $alat->nama_alat ?? 'Alat #'.$alat->id }}
                                     </option>
                                 @endforeach
@@ -73,7 +94,8 @@
                             <label class="form-label fw-medium">Jumlah</label>
                             <input type="number" name="jumlah" min="1"
                                 value="{{ old('jumlah',1) }}"
-                                class="form-control @error('jumlah') is-invalid @enderror" required>
+                                class="form-control @error('jumlah') is-invalid @enderror"
+                                required>
                             @error('jumlah')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -85,20 +107,16 @@
                                 <label class="form-label fw-medium">Tanggal Mulai</label>
                                 <input type="date" name="tanggal_mulai"
                                     value="{{ old('tanggal_mulai', now()->toDateString()) }}"
-                                    class="form-control @error('tanggal_mulai') is-invalid @enderror" required>
-                                @error('tanggal_mulai')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                    class="form-control @error('tanggal_mulai') is-invalid @enderror"
+                                    required>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label fw-medium">Tanggal Kembali</label>
                                 <input type="date" name="tanggal_selesai"
                                     value="{{ old('tanggal_selesai') }}"
-                                    class="form-control @error('tanggal_selesai') is-invalid @enderror" required>
-                                @error('tanggal_selesai')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                    class="form-control @error('tanggal_selesai') is-invalid @enderror"
+                                    required>
                             </div>
                         </div>
 
@@ -110,9 +128,6 @@
                             <small class="text-muted">
                                 Tambahkan alasan atau kebutuhan peminjaman
                             </small>
-                            @error('keterangan')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
                         </div>
 
                         <!-- SUBMIT -->
@@ -138,10 +153,10 @@
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-2">Cara Mengajukan</h6>
                     <ol class="small text-muted mb-4">
-                        <li>Pilih alat yang ingin dipinjam</li>
+                        <li>Pilih kategori</li>
+                        <li>Pilih alat</li>
                         <li>Tentukan jumlah</li>
-                        <li>Atur tanggal peminjaman</li>
-                        <li>Tambahkan keterangan jika perlu</li>
+                        <li>Atur tanggal</li>
                         <li>Klik Ajukan Peminjaman</li>
                     </ol>
 
@@ -150,21 +165,15 @@
                     <h6 class="fw-bold mb-2">Status Peminjaman</h6>
                     <ul class="list-unstyled small text-muted mb-0">
                         <li class="mb-2">
-                            <span class="badge bg-warning text-dark me-1">
-                                <i class="bi bi-clock"></i> Pending
-                            </span>
+                            <span class="badge bg-warning text-dark me-1">Pending</span>
                             Menunggu persetujuan
                         </li>
                         <li class="mb-2">
-                            <span class="badge bg-success me-1">
-                                <i class="bi bi-check"></i> Approved
-                            </span>
+                            <span class="badge bg-success me-1">Approved</span>
                             Peminjaman disetujui
                         </li>
                         <li>
-                            <span class="badge bg-danger me-1">
-                                <i class="bi bi-x"></i> Rejected
-                            </span>
+                            <span class="badge bg-danger me-1">Rejected</span>
                             Peminjaman ditolak
                         </li>
                     </ul>
@@ -173,11 +182,29 @@
         </div>
 
     </div>
-
-    <div class="alert alert-info">
-        <i class="bi bi-info-circle me-2"></i>
-        Untuk melihat riwayat peminjaman, buka <a href="{{ route('log.aktivitas') }}">Log Aktivitas</a>.
-    </div>
-
 </div>
+
+{{-- SCRIPT KONTROL ALAT --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const kategori = document.getElementById('kategori_id');
+    const alat = document.getElementById('alat_id');
+
+    function toggleAlat() {
+        if (kategori.value) {
+            alat.disabled = false;
+        } else {
+            alat.disabled = true;
+            alat.value = '';
+        }
+    }
+
+    // Saat halaman load (old input)
+    toggleAlat();
+
+    // Saat kategori berubah
+    kategori.addEventListener('change', toggleAlat);
+});
+</script>
+
 @endsection

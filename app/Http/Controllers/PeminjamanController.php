@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Alat;
+use App\Models\Kategori;
 use App\Models\Peminjaman;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
@@ -14,16 +15,28 @@ class PeminjamanController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $peminjamans = Peminjaman::where('user_id', $user->id)->latest()->get();
+
+        $peminjamans = Peminjaman::with('alat.kategori')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->get();
+
         $alats = Alat::all();
 
-        return view('user.loans', compact('peminjamans', 'alats'));
+        // ✅ TAMBAHKAN KATEGORI
+        $kategori = Kategori::orderBy('nama')->get();
+
+        return view('user.loans', compact('peminjamans', 'alats', 'kategori'));
     }
 
     public function create()
     {
         $alats = Alat::all();
-        return view('user.loans', compact('alats'));
+
+        // ✅ TAMBAHKAN KATEGORI
+        $kategori = Kategori::orderBy('nama')->get();
+
+        return view('user.loans', compact('alats', 'kategori'));
     }
 
     public function store(Request $request)
@@ -31,34 +44,38 @@ class PeminjamanController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'alat_id' => ['required', 'exists:alats,id'],
-            'jumlah' => ['required', 'integer', 'min:1'],
-            'tanggal_mulai' => ['required', 'date'],
+            'kategori_id'     => ['required', 'exists:kategori,id'], // ✅ WAJIB
+            'alat_id'         => ['required', 'exists:alats,id'],
+            'jumlah'          => ['required', 'integer', 'min:1'],
+            'tanggal_mulai'   => ['required', 'date'],
             'tanggal_selesai' => ['required', 'date', 'after_or_equal:tanggal_mulai'],
-            'keterangan' => ['nullable', 'string', 'max:1000'],
+            'keterangan'      => ['nullable', 'string', 'max:1000'],
         ]);
 
-        // cek stok alat
         $alat = Alat::find($validated['alat_id']);
         if (!$alat) {
-            return Redirect::back()->withErrors(['alat_id' => 'Alat tidak ditemukan.'])->withInput();
+            return Redirect::back()
+                ->withErrors(['alat_id' => 'Alat tidak ditemukan.'])
+                ->withInput();
         }
 
         if ($validated['jumlah'] > $alat->jumlah) {
-            return Redirect::back()->withErrors(['jumlah' => 'Stok alat tidak mencukupi.'])->withInput();
+            return Redirect::back()
+                ->withErrors(['jumlah' => 'Stok alat tidak mencukupi.'])
+                ->withInput();
         }
 
-        $peminjaman = Peminjaman::create([
-            'user_id' => $user->id,
-            'alat_id' => $validated['alat_id'],
-            'jumlah' => $validated['jumlah'],
-            'tanggal_mulai' => $validated['tanggal_mulai'],
+        Peminjaman::create([
+            'user_id'         => $user->id,
+            'kategori_id'     => $validated['kategori_id'], // ✅ DISIMPAN
+            'alat_id'         => $validated['alat_id'],
+            'jumlah'          => $validated['jumlah'],
+            'tanggal_mulai'   => $validated['tanggal_mulai'],
             'tanggal_selesai' => $validated['tanggal_selesai'],
-            'keterangan' => $validated['keterangan'] ?? null,
-            'status' => 'pending',
+            'keterangan'      => $validated['keterangan'] ?? null,
+            'status'          => 'pending',
         ]);
 
-        // Catat aktivitas pembuatan peminjaman
         ActivityLog::create([
             'user_id' => $user->id,
             'activity' => 'Ajukan Peminjaman',
@@ -67,17 +84,25 @@ class PeminjamanController extends Controller
             'tanggal_selesai' => $validated['tanggal_selesai'],
             'description' => sprintf(
                 'Mengajukan peminjaman alat %s',
-                $alat->nama ?? $alat->nama_alat ?? 'Alat#'.$alat->id
+                $alat->nama ?? $alat->nama_alat ?? 'Alat#' . $alat->id
             ),
         ]);
 
-        return redirect()->route('user.peminjaman')->with('success', 'Permintaan peminjaman berhasil dikirim.');
+        return redirect()
+            ->route('user.peminjaman')
+            ->with('success', 'Permintaan peminjaman berhasil dikirim.');
     }
 
     public function show($id)
     {
         $user = Auth::user();
-        $peminjaman = Peminjaman::where('id', $id)->where('user_id', $user->id)->firstOrFail();
+
+        // ✅ EAGER LOAD AGAR KATEGORI TAMPIL
+        $peminjaman = Peminjaman::with(['alat.kategori', 'kategori'])
+            ->where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
         return view('user.peminjaman_show', compact('peminjaman'));
     }
 }
