@@ -21,7 +21,14 @@ class AuthController extends Controller
     {
         $credentials = $request->validated();
 
-        if (Auth::attempt($credentials)) {
+        $candidate = User::where('email', $credentials['email'])->first();
+        if ($candidate && $candidate->is_active === false) {
+            return back()->withErrors([
+                'email' => 'Akun Anda telah dinonaktifkan. Hubungi admin.',
+            ]);
+        }
+
+        if (Auth::attempt(array_merge($credentials, ['is_active' => true]))) {
             $request->session()->regenerate();
 
             $role = Auth::user()->role ?? 'user';
@@ -53,6 +60,7 @@ class AuthController extends Controller
             'email'    => $payload['email'],
             'password' => bcrypt($payload['password']),
             'role'     => 'user', // 🔥 FIX UNDEFINED ROLE
+            'is_active'=> true,
         ]);
 
         return redirect()->route('login')->with('success', 'Registrasi berhasil, silakan login.');
@@ -84,6 +92,7 @@ class AuthController extends Controller
             'email'    => $payload['email'],
             'password' => bcrypt($payload['password']),
             'role'     => 'petugas',
+            'is_active'=> true,
         ]);
 
         return back()->with('success', 'Akun petugas berhasil dibuat.');

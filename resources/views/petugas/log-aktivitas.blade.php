@@ -28,7 +28,7 @@
                             <th>Aktivitas</th>
                             <th>Jumlah</th>
                             <th>Waktu</th>
-                            <th>Catatan</th>
+                            <th style="width:26%;">Catatan</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -39,7 +39,9 @@
                             <td><span class="badge bg-primary-subtle text-primary">{{ $log->activity }}</span></td>
                             <td>{{ $log->jumlah ?? '-' }}</td>
                             <td>{{ $log->created_at->format('d M Y H:i') }}</td>
-                            <td style="max-width:360px; white-space:pre-wrap; word-break:break-word;">{{ $log->description ?? '-' }}</td>
+                            <td class="small text-muted" style="max-width:240px; white-space:pre-wrap; word-break:break-word; word-wrap:break-word;">
+                                {{ $log->description ?? '-' }}
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>

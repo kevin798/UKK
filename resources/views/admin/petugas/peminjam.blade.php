@@ -36,6 +36,7 @@
                             <th>Nama</th>
                             <th>Email</th>
                             <th>Role</th>
+                            <th>Status</th>
                             <th>Terdaftar</th>
                             <th class="text-center">Aksi</th>
                         </tr>
@@ -51,6 +52,13 @@
                                     {{ ucfirst($item->role) }}
                                 </span>
                             </td>
+                            <td>
+                                @if($item->is_active)
+                                    <span class="badge bg-success-subtle text-success">Aktif</span>
+                                @else
+                                    <span class="badge bg-secondary">Nonaktif</span>
+                                @endif
+                            </td>
                             <td>{{ $item->created_at->format('d M Y') }}</td>
                             <td class="text-center">
                                 <div class="d-flex justify-content-center gap-1 flex-wrap">
@@ -64,8 +72,19 @@
                                           onsubmit="return confirm('Hapus peminjam ini?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
                                             Hapus
+                                    </button>
+                                </form>
+
+                                    <form action="{{ route('admin.peminjam.toggle', $item->id) }}"
+                                          method="POST"
+                                          onsubmit="return confirm('Ubah status peminjam ini?')">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit"
+                                                class="btn btn-sm {{ $item->is_active ? 'btn-outline-secondary' : 'btn-outline-success' }} rounded-pill px-3">
+                                            {{ $item->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                                         </button>
                                     </form>
                                 </div>

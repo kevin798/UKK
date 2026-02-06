@@ -31,12 +31,12 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('admin.petugas') }}" class="{{ request()->routeIs('admin.petugas.*') ? $activeClass : $inactiveClass }}">
+                <a href="{{ route('admin.petugas') }}" class="{{ request()->routeIs('admin.petugas', 'admin.petugas.*') ? $activeClass : $inactiveClass }}">
                     Kelola Petugas
                 </a>
             </li>
             <li>
-                <a href="{{ route('admin.peminjam') }}" class="{{ request()->routeIs('admin.peminjam.*') ? $activeClass : $inactiveClass }}">
+                <a href="{{ route('admin.peminjam') }}" class="{{ request()->routeIs('admin.peminjam', 'admin.peminjam.*') ? $activeClass : $inactiveClass }}">
                     Kelola Peminjam
                 </a>
             </li>

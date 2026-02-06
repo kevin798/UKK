@@ -20,7 +20,7 @@
                 <!-- NAMA -->
                 <div class="mb-3">
                     <label for="name" class="form-label fw-medium">
-                        Nama <span class="text-danger">*</span>
+                        Nama </span>
                     </label>
                     <input type="text" id="name" name="name"
                         class="form-control @error('name') is-invalid @enderror"

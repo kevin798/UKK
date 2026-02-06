@@ -82,8 +82,10 @@ class UserController extends Controller
 
         $data = $request->validated();
 
-        if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
+        if (!empty($data['password'])) {
+            $data['password'] = Hash::make($data['password']);
+        } else {
+            unset($data['password']);
         }
 
         $user->update($data);
@@ -180,5 +182,25 @@ class UserController extends Controller
         if ($user->role !== 'user') {
             abort(404);
         }
+    }
+
+    public function togglePetugas(User $user)
+    {
+        $this->ensurePetugas($user);
+        $user->is_active = !$user->is_active;
+        $user->save();
+
+        return redirect()->back()->with('success', 'Status petugas diperbarui.');
+    }
+
+    public function togglePeminjam($id)
+    {
+        $user = User::findOrFail($id);
+        $this->ensurePeminjam($user);
+
+        $user->is_active = !$user->is_active;
+        $user->save();
+
+        return redirect()->back()->with('success', 'Status peminjam diperbarui.');
     }
 }

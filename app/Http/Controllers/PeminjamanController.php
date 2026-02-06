@@ -102,6 +102,19 @@ class PeminjamanController extends Controller
             ),
         ]);
 
+        // Catat aktivitas pembuatan peminjaman
+        ActivityLog::create([
+            'user_id' => $user->id,
+            'activity' => 'Ajukan Peminjaman',
+            'jumlah' => $validated['jumlah'],
+            'tanggal_mulai' => $validated['tanggal_mulai'],
+            'tanggal_selesai' => $validated['tanggal_selesai'],
+            'description' => sprintf(
+                'Mengajukan peminjaman alat %s',
+                $alat->nama ?? $alat->nama_alat ?? 'Alat#'.$alat->id
+            ),
+        ]);
+
         return redirect()
             ->route('user.peminjaman')
             ->with('success', 'Permintaan peminjaman berhasil dikirim.');

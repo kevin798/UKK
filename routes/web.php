@@ -24,7 +24,7 @@ Route::middleware(['guest'])->group(function () {
     });
 });
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth','active'])->group(function () {
 
     Route::post('auth/logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -54,6 +54,9 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('peminjam/delete/{id}', [UserController::class, 'deletePeminjam'])
                 ->name('admin.peminjam.delete');
 
+            Route::patch('peminjam/toggle/{id}', [UserController::class, 'togglePeminjam'])
+                ->name('admin.peminjam.toggle');
+
             Route::prefix('petugas')->group(function () {
 
                 Route::get('/', [UserController::class, 'petugasList'])
@@ -73,6 +76,9 @@ Route::middleware(['auth'])->group(function () {
 
                 Route::delete('/delete/{user}', [UserController::class, 'deletePetugas'])
                     ->name('admin.petugas.delete');
+
+                Route::patch('/toggle/{user}', [UserController::class, 'togglePetugas'])
+                    ->name('admin.petugas.toggle');
             });
 
             Route::resource('kategori', KategoriController::class);

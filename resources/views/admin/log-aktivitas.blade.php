@@ -32,7 +32,7 @@
                             <th>Aktivitas</th>
                             <th>Jumlah</th>
                             <th>Rentang Waktu</th>
-                            <th>Catatan</th>
+                            <th style="width:26%;">Catatan</th>
                             <th class="text-center">Detail</th>
                         </tr>
                     </thead>
@@ -48,7 +48,9 @@
                                 s/d
                                 {{ $log->tanggal_selesai ? \Carbon\Carbon::parse($log->tanggal_selesai)->format('d/m/Y') : '-' }}
                             </td>
-                            <td style="max-width:360px; white-space:pre-wrap; word-break:break-word;">{{ $log->description ?? '-' }}</td>
+                            <td class="small text-muted" style="max-width:240px; white-space:pre-wrap; word-break:break-word; word-wrap:break-word;">
+                                {{ $log->description ?? '-' }}
+                            </td>
                             <td class="text-center">
                                 <button class="btn btn-sm btn-outline-primary btn-log-detail" data-id="{{ $log->id }}">
                                     <i class="bi bi-eye"></i>

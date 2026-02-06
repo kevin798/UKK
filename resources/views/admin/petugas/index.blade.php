@@ -35,6 +35,7 @@
                             <th>Nama</th>
                             <th>Email</th>
                             <th>Role</th>
+                            <th>Status</th>
                             <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
@@ -45,6 +46,13 @@
                             <td>{{ $item->email }}</td>
                             <td>
                                 <span class="badge bg-info text-dark">{{ ucfirst($item->role) }}</span>
+                            </td>
+                            <td>
+                                @if($item->is_active)
+                                    <span class="badge bg-success-subtle text-success">Aktif</span>
+                                @else
+                                    <span class="badge bg-secondary">Nonaktif</span>
+                                @endif
                             </td>
                             <td class="text-center align-middle">
                                 <div class="d-flex justify-content-center gap-2 flex-wrap">
@@ -59,6 +67,16 @@
                                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"
                                         onclick="return confirm('Hapus petugas ini?')">
                                         Hapus
+                                    </button>
+                                </form>
+
+                                <form action="{{ route('admin.petugas.toggle', $item->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit"
+                                            class="btn btn-sm {{ $item->is_active ? 'btn-outline-secondary' : 'btn-outline-success' }} rounded-pill px-3"
+                                            onclick="return confirm('Ubah status petugas ini?')">
+                                        {{ $item->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                                     </button>
                                 </form>
                                 </div>
@@ -79,4 +97,3 @@
     </div>
 </div>
 @endsection
-
