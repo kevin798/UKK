@@ -25,9 +25,8 @@
                     <input type="text" id="name" name="name"
                         class="form-control @error('name') is-invalid @enderror"
                         value="{{ old('name', $petugas->name) }}"
-                        placeholder="Minimal 3 karakter"
+                        placeholder="Masukan Nama"
                         required>
-                    <small class="text-muted">Minimal 3 karakter</small>
                     @error('name')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror

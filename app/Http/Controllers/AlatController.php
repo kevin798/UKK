@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Alat;
 use App\Models\Kategori;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class AlatController extends Controller
 {
@@ -16,13 +18,24 @@ class AlatController extends Controller
         return view('admin.alat.index', compact('alat', 'kategoriCount'));
     }
 
+    public function userList(Request $request)
+    {
+        $query = Alat::with('kategori')->where('jumlah', '>', 0)->latest();
+
+        // Filter berdasarkan kategori jika ada
+        if ($request->has('kategori_id') && $request->kategori_id) {
+            $query->where('kategori_id', $request->kategori_id);
+        }
+
+        $alat = $query->get();
+        $kategori = Kategori::orderBy('nama')->get();
+
+        return view('user.alat-list', compact('alat', 'kategori'));
+    }
+
     public function create()
     {
         $kategori = Kategori::all();
-        if ($kategori->isEmpty()) {
-            return redirect()->route('alat.index')
-                ->with('error', 'Tidak ada kategori. Silakan tambah kategori terlebih dahulu.');
-        }
         return view('admin.alat.create', compact('kategori'));
     }
 
@@ -30,20 +43,29 @@ class AlatController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255',
-            'jumlah' => 'required|integer|min:0',
             'kategori_id' => 'required|exists:kategoris,id',
+            'jumlah' => 'required|integer|min:1',
             'keterangan' => 'nullable|string',
+            'gambar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
         ]);
 
-        DB::beginTransaction();
-        try {
-            Alat::create($request->all());
-            DB::commit();
-            return redirect()->route('alat.index')->with('success', 'Data alat berhasil ditambahkan');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal menambah data alat')->withInput();
+        $data = $request->all();
+
+        if ($request->hasFile('gambar')) {
+            $data['gambar'] = $request->file('gambar')->store('alat', 'public');
         }
+
+        $alat = Alat::create($data);
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'activity' => 'Tambah Alat',
+            'jumlah' => $alat->jumlah,
+            'description' => sprintf('Menambah alat %s (stok %s)', $alat->nama, $alat->jumlah),
+        ]);
+
+        return redirect()->route('alat.index')
+            ->with('success', 'Alat berhasil ditambahkan');
     }
 
     public function edit(Alat $alat)
@@ -54,48 +76,60 @@ class AlatController extends Controller
 
     public function update(Request $request, Alat $alat)
     {
+        $oldJumlah = $alat->jumlah;
         $request->validate([
             'nama' => 'required|string|max:255',
-            'jumlah' => 'required|integer|min:0',
             'kategori_id' => 'required|exists:kategoris,id',
+            'jumlah' => 'required|integer|min:1',
             'keterangan' => 'nullable|string',
+            'gambar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
         ]);
 
-        DB::beginTransaction();
-        try {
-            $alat->update($request->all());
-            DB::commit();
-            return redirect()->route('alat.index')->with('success', 'Data alat berhasil diupdate');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal mengupdate data alat')->withInput();
+        $data = $request->all();
+
+        if ($request->hasFile('gambar')) {
+            if ($alat->gambar) {
+                Storage::disk('public')->delete($alat->gambar);
+            }
+            $data['gambar'] = $request->file('gambar')->store('alat', 'public');
         }
+
+        $alat->update($data);
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'activity' => 'Update Alat',
+            'jumlah' => $alat->jumlah,
+            'description' => sprintf(
+                'Memperbarui alat %s (stok %s → %s)',
+                $alat->nama,
+                $oldJumlah,
+                $alat->jumlah
+            ),
+        ]);
+
+        return redirect()->route('alat.index')
+            ->with('success', 'Alat berhasil diperbarui');
     }
 
     public function destroy(Alat $alat)
     {
-        DB::beginTransaction();
-        try {
-            $alat->delete();
-            DB::commit();
-            return redirect()->route('alat.index')->with('success', 'Data alat berhasil dihapus');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->route('alat.index')->with('error', 'Gagal menghapus data alat');
-        }
-    }
-
-    public function userList(Request $request)
-    {
-        $kategori = Kategori::all();
-        $query = Alat::with('kategori');
-
-        if ($request->has('kategori_id') && $request->kategori_id) {
-            $query->where('kategori_id', $request->kategori_id);
+        $nama = $alat->nama;
+        $stok = $alat->jumlah;
+        if ($alat->gambar) {
+            Storage::disk('public')->delete($alat->gambar);
         }
 
-        $alat = $query->latest()->get();
-        return view('user.alat-list', compact('alat', 'kategori'));
+        $alat->delete();
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'activity' => 'Hapus Alat',
+            'jumlah' => $stok,
+            'description' => sprintf('Menghapus alat %s (stok terakhir %s)', $nama, $stok),
+        ]);
+
+        return redirect()->route('alat.index')
+            ->with('success', 'Alat berhasil dihapus');
     }
 }
-

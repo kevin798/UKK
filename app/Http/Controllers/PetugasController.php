@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Peminjaman;
 use Illuminate\Http\Request;
 use App\Models\Alat;
+use App\Models\ActivityLog;
 use Illuminate\Support\Facades\DB;
 
 class PetugasController extends Controller
@@ -25,10 +26,49 @@ class PetugasController extends Controller
     public function showPeminjamanList()
     {
         $peminjamans = Peminjaman::with('user', 'alat')
+            ->where('status', 'pending')
             ->orderBy('created_at', 'desc')
             ->get();
 
         return view('petugas.peminjaman_list', compact('peminjamans'));
+    }
+
+    public function showPengembalianList()
+    {
+        $peminjamans = Peminjaman::with('user', 'alat')
+            ->whereIn('status', ['approved', 'returned'])
+            ->orderBy('tanggal_selesai', 'asc')
+            ->get();
+
+        return view('petugas.pengembalian_list', compact('peminjamans'));
+    }
+
+    public function dendaList()
+    {
+        $dendaList = Peminjaman::with(['user', 'alat'])
+            ->where('denda_amount', '>', 0)
+            ->latest()
+            ->paginate(15);
+
+        return view('petugas.denda', compact('dendaList'));
+    }
+
+    public function updateDenda(Request $request, Peminjaman $peminjaman)
+    {
+        $validated = $request->validate([
+            'denda_amount' => 'required|numeric|min:0',
+            'denda_reason' => 'nullable|string|max:1000',
+            'denda_status' => 'required|string|in:unpaid,paid,waived,none',
+        ]);
+
+        $peminjaman->update([
+            'denda_amount' => $validated['denda_amount'],
+            'denda_reason' => $validated['denda_reason'] ?? null,
+            'denda_status' => $validated['denda_status'],
+            'denda_set_by' => auth()->id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Denda berhasil diperbarui.');
     }
 
     public function approvePeminjaman($id)
@@ -54,6 +94,19 @@ class PetugasController extends Controller
             $alat->save();
 
             $peminjaman->update(['status' => 'approved']);
+
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'activity' => 'Approve Peminjaman',
+                'jumlah' => $peminjaman->jumlah,
+                'tanggal_mulai' => $peminjaman->tanggal_mulai,
+                'tanggal_selesai' => $peminjaman->tanggal_selesai,
+                'description' => sprintf(
+                    'Menyetujui peminjaman alat %s untuk user #%s',
+                    $alat->nama ?? $alat->nama_alat ?? 'Alat#'.$alat->id,
+                    $peminjaman->user_id
+                ),
+            ]);
         });
 
         return redirect()->back()->with('success', 'Peminjaman berhasil disetujui.');
@@ -71,10 +124,23 @@ class PetugasController extends Controller
             'keterangan' => $validated['alasan'],
         ]);
 
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'Reject Peminjaman',
+            'jumlah' => $peminjaman->jumlah,
+            'tanggal_mulai' => $peminjaman->tanggal_mulai,
+            'tanggal_selesai' => $peminjaman->tanggal_selesai,
+            'description' => sprintf(
+                'Menolak peminjaman %s. Alasan: %s',
+                $peminjaman->alat->nama ?? $peminjaman->alat->nama_alat ?? 'Alat#'.$peminjaman->alat_id,
+                $validated['alasan']
+            ),
+        ]);
+
         return redirect()->back()->with('success', 'Peminjaman berhasil ditolak.');
     }
 
-    public function returnPeminjaman($id)
+    public function returnPeminjaman(Request $request, $id)
     {
         $peminjaman = Peminjaman::with('alat')->findOrFail($id);
 
@@ -87,14 +153,57 @@ class PetugasController extends Controller
             return redirect()->back()->with('error', 'Alat tidak ditemukan.');
         }
 
-        DB::transaction(function () use ($peminjaman, $alat) {
+        $validated = $request->validate([
+            'kondisi_pengembalian' => 'required|string|in:baik,rusak,hilang,terlambat',
+            'denda_amount' => 'nullable|numeric|min:0',
+            'denda_reason' => 'nullable|string|max:1000',
+            'denda_type' => 'nullable|string|max:50',
+        ]);
+
+        $hariTerlambat = 0;
+        if ($peminjaman->tanggal_selesai) {
+            $hariTerlambat = max(0, now()->startOfDay()->diffInDays(\Carbon\Carbon::parse($peminjaman->tanggal_selesai), false) * -1);
+        }
+
+        $lateFinePerDay = 10000; // Rp10.000 per hari keterlambatan
+        $autoLateFine = $hariTerlambat > 0 ? $hariTerlambat * $lateFinePerDay : 0;
+        $finalFine = $validated['denda_amount'] ?? null;
+        if ($finalFine === null || $finalFine === '') {
+            $finalFine = $autoLateFine;
+        }
+
+        DB::transaction(function () use ($peminjaman, $alat, $validated, $hariTerlambat, $finalFine, $autoLateFine, $lateFinePerDay) {
             $alat->jumlah = $alat->jumlah + $peminjaman->jumlah;
             $alat->save();
 
-            $peminjaman->update(['status' => 'returned']);
+            $peminjaman->update([
+                'status' => 'returned',
+                'kondisi_pengembalian' => $validated['kondisi_pengembalian'],
+                'denda_amount' => $finalFine,
+                'denda_status' => ($finalFine ?? 0) > 0 ? 'unpaid' : 'none',
+                'denda_reason' => $validated['denda_reason'] ?? null,
+                'denda_type' => $validated['denda_type']
+                    ?? ($hariTerlambat > 0 ? 'terlambat' : $validated['kondisi_pengembalian']),
+                'denda_set_by' => auth()->id(),
+                'keterlambatan_hari' => $hariTerlambat,
+            ]);
+
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'activity' => 'Terima Pengembalian',
+                'jumlah' => $peminjaman->jumlah,
+                'tanggal_mulai' => $peminjaman->tanggal_mulai,
+                'tanggal_selesai' => $peminjaman->tanggal_selesai,
+                'description' => sprintf(
+                    'Terima pengembalian %s. Kondisi: %s. Denda: Rp%s (terlambat %s hari).',
+                    $peminjaman->alat->nama ?? $peminjaman->alat->nama_alat ?? 'Alat#'.$peminjaman->alat_id,
+                    $validated['kondisi_pengembalian'],
+                    number_format($finalFine ?? 0, 0, ',', '.'),
+                    $hariTerlambat
+                ),
+            ]);
         });
 
         return redirect()->back()->with('success', 'Peminjaman ditandai telah dikembalikan dan stok diperbarui.');
     }
 }
-

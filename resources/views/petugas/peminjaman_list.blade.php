@@ -87,7 +87,7 @@
                             <!-- AKSI -->
                             <td class="text-center">
                                 @if($p->status === 'pending')
-                                    <div class="d-inline-flex gap-1">
+                                    <div class="d-flex justify-content-center gap-1 flex-wrap">
 
                                         <!-- APPROVE -->
                                         <form action="{{ route('petugas.peminjaman.approve', $p->id) }}"

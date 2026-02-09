@@ -28,25 +28,26 @@
                 </div>
             @endif
 
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Nama</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th class="text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($petugas as $item)
-                    <tr>
-                        <td class="fw-medium">{{ $item->name }}</td>
-                        <td>{{ $item->email }}</td>
-                        <td>
-                            <span class="badge bg-info text-dark">{{ ucfirst($item->role) }}</span>
-                        </td>
-                        <td class="text-center align-middle">
-                            <div class="d-flex justify-content-center gap-2">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nama</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($petugas as $item)
+                        <tr>
+                            <td class="fw-medium">{{ $item->name }}</td>
+                            <td>{{ $item->email }}</td>
+                            <td>
+                                <span class="badge bg-info text-dark">{{ ucfirst($item->role) }}</span>
+                            </td>
+                            <td class="text-center align-middle">
+                                <div class="d-flex justify-content-center gap-2 flex-wrap">
                                 <a href="{{ route('admin.petugas.edit', $item->id) }}"
                                     class="btn btn-sm btn-outline-primary rounded-pill px-3">
                                     Edit
@@ -60,18 +61,19 @@
                                         Hapus
                                     </button>
                                 </form>
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="4" class="text-center py-4 text-muted">
-                            Tidak ada data petugas
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">
+                                Tidak ada data petugas
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
         </div>
     </div>

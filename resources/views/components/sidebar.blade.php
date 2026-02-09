@@ -51,8 +51,8 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('admin.riwayat') }}" class="{{ request()->routeIs('admin.riwayat*') ? $activeClass : $inactiveClass }}">
-                    Riwayat Peminjaman
+                <a href="{{ route('admin.log-aktivitas') }}" class="{{ request()->routeIs('admin.log-aktivitas*') ? $activeClass : $inactiveClass }}">
+                    Log Aktivitas
                 </a>
             </li>
         @endif
@@ -75,6 +75,27 @@
                    class="{{ request()->routeIs('petugas.peminjaman') ? $activeClass : $inactiveClass }}">
                     <i class="bi bi-check-circle"></i>
                     Persetujuan
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('petugas.pengembalian') }}"
+                   class="{{ request()->routeIs('petugas.pengembalian') ? $activeClass : $inactiveClass }}">
+                    <i class="bi bi-arrow-repeat"></i>
+                    Pengembalian
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('petugas.denda') }}"
+                   class="{{ request()->routeIs('petugas.denda') ? $activeClass : $inactiveClass }}">
+                    <i class="bi bi-cash-stack"></i>
+                    Denda
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('petugas.log-aktivitas') }}"
+                   class="{{ request()->routeIs('petugas.log-aktivitas') ? $activeClass : $inactiveClass }}">
+                    <i class="bi bi-clock-history"></i>
+                    Log Aktivitas
                 </a>
             </li>
         @endif
@@ -103,11 +124,20 @@
             </li>
 
             <li>
+                <a href="{{ route('user.pengembalian') }}"
+                   class="{{ request()->routeIs('user.pengembalian') ? $activeClass : $inactiveClass }}">
+                    <i class="bi bi-arrow-repeat"></i>
+                    Pengembalian
+                </a>
+            </li>
+
+            <li>
                 <a href="{{ route('log.aktivitas') }}"
                    class="{{ request()->routeIs('log.aktivitas') ? $activeClass : $inactiveClass }}">
                     <i class="bi bi-clock-history"></i>
                     Log Aktivitas
                 </a>
+            </li>
         @endif
 
     </ul>

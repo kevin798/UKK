@@ -70,7 +70,7 @@
                             @enderror
                         </div>
 
-                        <!-- ALAT (DISABLED SEBELUM PILIH KATEGORI) -->
+                        <!-- ALAT -->
                         <div class="mb-3">
                             <label class="form-label fw-medium">Nama Alat</label>
                             <select name="alat_id" id="alat_id"
@@ -79,6 +79,8 @@
                                 <option value="">-- Pilih Alat --</option>
                                 @foreach($alats as $alat)
                                     <option value="{{ $alat->id }}"
+                                        data-kategori="{{ $alat->kategori_id }}"
+                                        data-foto="{{ $alat->foto ? asset('storage/'.$alat->foto) : '' }}"
                                         @selected(old('alat_id') == $alat->id)>
                                         {{ $alat->nama ?? $alat->nama_alat ?? 'Alat #'.$alat->id }}
                                     </option>
@@ -87,6 +89,15 @@
                             @error('alat_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                        </div>
+
+                        <!-- FOTO ALAT -->
+                        <div class="mb-3 text-center" id="foto-alat-wrapper" style="display:none;">
+                            <img id="foto-alat"
+                                 src=""
+                                 class="img-fluid rounded shadow-sm"
+                                 style="max-height:200px; object-fit:contain;"
+                                 alt="Foto Alat">
                         </div>
 
                         <!-- JUMLAH -->
@@ -184,26 +195,43 @@
     </div>
 </div>
 
-{{-- SCRIPT KONTROL ALAT --}}
+{{-- SCRIPT FILTER ALAT + FOTO --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const kategori = document.getElementById('kategori_id');
     const alat = document.getElementById('alat_id');
+    const fotoWrapper = document.getElementById('foto-alat-wrapper');
+    const foto = document.getElementById('foto-alat');
 
-    function toggleAlat() {
-        if (kategori.value) {
-            alat.disabled = false;
+    function filterAlat() {
+        const kategoriId = kategori.value;
+        alat.value = '';
+        fotoWrapper.style.display = 'none';
+
+        Array.from(alat.options).forEach(option => {
+            if (!option.value) return;
+
+            option.hidden = option.dataset.kategori !== kategoriId;
+        });
+
+        alat.disabled = !kategoriId;
+    }
+
+    function tampilFoto() {
+        const selected = alat.options[alat.selectedIndex];
+        const fotoUrl = selected?.dataset?.foto;
+
+        if (fotoUrl) {
+            foto.src = fotoUrl;
+            fotoWrapper.style.display = 'block';
         } else {
-            alat.disabled = true;
-            alat.value = '';
+            fotoWrapper.style.display = 'none';
         }
     }
 
-    // Saat halaman load (old input)
-    toggleAlat();
-
-    // Saat kategori berubah
-    kategori.addEventListener('change', toggleAlat);
+    filterAlat();
+    kategori.addEventListener('change', filterAlat);
+    alat.addEventListener('change', tampilFoto);
 });
 </script>
 

@@ -104,7 +104,7 @@
     </div>
 
     <!-- ACTION SECTION -->
-    <div class="row g-4">
+    <div class="row g-4 mb-4">
 
         <!-- AJUKAN PEMINJAMAN -->
         <div class="col-12 col-md-6">
@@ -158,6 +158,65 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- RIWAYAT PEMINJAMAN TERBARU -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0 py-3 d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="fw-bold mb-1">Riwayat Peminjaman Terbaru</h6>
+                <p class="text-muted small mb-0">5 transaksi terakhir yang kamu ajukan</p>
+            </div>
+            <a href="{{ route('user.peminjaman') }}" class="btn btn-outline-primary btn-sm">
+                Lihat semua
+            </a>
+        </div>
+        @if($recentLoans->isEmpty())
+            <div class="card-body">
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Belum ada riwayat peminjaman.
+                </div>
+            </div>
+        @else
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr class="text-uppercase small text-muted">
+                            <th>#</th>
+                            <th>Alat</th>
+                            <th>Jumlah</th>
+                            <th>Mulai</th>
+                            <th>Kembali</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($recentLoans as $index => $loan)
+                            <tr>
+                                <td>{{ $index + 1 }}</td>
+                                <td>
+                                    <strong>{{ $loan->alat->nama ?? $loan->alat->nama_alat ?? 'Alat #'.$loan->alat_id }}</strong>
+                                </td>
+                                <td>{{ $loan->jumlah }}</td>
+                                <td>{{ \Carbon\Carbon::parse($loan->tanggal_mulai)->format('d/m/Y') }}</td>
+                                <td>{{ \Carbon\Carbon::parse($loan->tanggal_selesai)->format('d/m/Y') }}</td>
+                                <td>
+                                    @if($loan->status === 'pending')
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    @elseif($loan->status === 'approved')
+                                        <span class="badge bg-success">Disetujui</span>
+                                    @elseif($loan->status === 'returned')
+                                        <span class="badge bg-primary">Dikembalikan</span>
+                                    @else
+                                        <span class="badge bg-danger">Ditolak</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
     </div>
 
 </div>

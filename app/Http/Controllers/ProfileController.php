@@ -9,12 +9,23 @@ class ProfileController extends Controller
 {
     public function edit()
     {
-        return view('user.profile.edit');
+        $user = auth()->user();
+        $role = $user->role ?? 'user';
+
+        // Gunakan view sesuai role
+        $viewName = match($role) {
+            'admin' => 'admin.profile.edit',
+            'petugas' => 'petugas.profile.edit',
+            default => 'profile.edit',
+        };
+
+        return view($viewName, compact('user', 'role'));
     }
 
     public function update(Request $request)
     {
         $user = auth()->user();
+        $role = $user->role ?? 'user';
 
         $request->validate([
             'name'   => 'required|string|max:255',
@@ -39,8 +50,15 @@ class ProfileController extends Controller
             'address' => $request->address,
         ]);
 
+        // Redirect ke dashboard masing-masing role
+        $redirectRoute = match($role) {
+            'admin' => 'admin.dashboard',
+            'petugas' => 'petugas.dashboard',
+            default => 'user.dashboard',
+        };
+
         return redirect()
-            ->route('user.profile.edit')
+            ->route($redirectRoute)
             ->with('success', 'Profile berhasil diperbarui');
     }
 }

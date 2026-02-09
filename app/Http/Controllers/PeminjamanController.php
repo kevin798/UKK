@@ -9,6 +9,7 @@ use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\DB;
 
 class PeminjamanController extends Controller
 {
@@ -29,6 +30,19 @@ class PeminjamanController extends Controller
         return view('user.loans', compact('peminjamans', 'alats', 'kategori'));
     }
 
+    public function pengembalian()
+    {
+        $user = Auth::user();
+
+        $peminjamans = Peminjaman::with('alat.kategori')
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['approved', 'returned'])
+            ->orderBy('tanggal_selesai', 'asc')
+            ->get();
+
+        return view('user.pengembalian', compact('peminjamans'));
+    }
+
     public function create()
     {
         $alats = Alat::all();
@@ -44,7 +58,7 @@ class PeminjamanController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'kategori_id'     => ['required', 'exists:kategori,id'], // ✅ WAJIB
+            'kategori_id'     => ['required', 'exists:kategoris,id'], // ✅ WAJIB
             'alat_id'         => ['required', 'exists:alats,id'],
             'jumlah'          => ['required', 'integer', 'min:1'],
             'tanggal_mulai'   => ['required', 'date'],
@@ -104,5 +118,66 @@ class PeminjamanController extends Controller
             ->firstOrFail();
 
         return view('user.peminjaman_show', compact('peminjaman'));
+    }
+
+    public function return(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        $peminjaman = Peminjaman::with('alat')
+            ->where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        if ($peminjaman->status !== 'approved') {
+            return Redirect::back()->with('warning', 'Hanya peminjaman yang berstatus approved yang dapat dikembalikan.');
+        }
+
+        $alat = $peminjaman->alat;
+        if (!$alat) {
+            return Redirect::back()->with('error', 'Alat tidak ditemukan.');
+        }
+
+        DB::transaction(function () use ($peminjaman, $alat) {
+            $alat->jumlah = $alat->jumlah + $peminjaman->jumlah;
+            $alat->save();
+
+            $peminjaman->update(['status' => 'returned']);
+        });
+
+        return Redirect::route('user.peminjaman')
+            ->with('success', 'Peminjaman berhasil dikembalikan. Terima kasih.');
+    }
+
+    public function payFine(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        $peminjaman = Peminjaman::where('user_id', $user->id)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        if (($peminjaman->denda_amount ?? 0) <= 0) {
+            return Redirect::back()->with('warning', 'Tidak ada denda untuk dibayar.');
+        }
+
+        if ($peminjaman->denda_status === 'paid') {
+            return Redirect::back()->with('info', 'Denda sudah dibayar.');
+        }
+
+        $request->validate([
+            'catatan_pembayaran' => 'nullable|string|max:500',
+        ]);
+
+        $peminjaman->update([
+            'denda_status' => 'paid',
+            'denda_reason' => $request->catatan_pembayaran
+                ? ($peminjaman->denda_reason
+                    ? $peminjaman->denda_reason . ' | Catatan bayar: ' . $request->catatan_pembayaran
+                    : 'Catatan bayar: ' . $request->catatan_pembayaran)
+                : $peminjaman->denda_reason,
+        ]);
+
+        return Redirect::back()->with('success', 'Terima kasih, denda telah ditandai sebagai dibayar.');
     }
 }

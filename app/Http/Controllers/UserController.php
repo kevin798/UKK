@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\MakePetugasRequest;
 use App\Models\User;
+use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -47,11 +49,17 @@ class UserController extends Controller
 
     public function createPetugas(MakePetugasRequest $request)
     {
-        User::create([
+        $petugas = User::create([
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => Hash::make($request->password),
             'role'     => 'petugas',
+        ]);
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'activity' => 'Tambah Petugas',
+            'description' => sprintf('Menambah petugas %s (%s)', $petugas->name, $petugas->email),
         ]);
 
         return redirect()
@@ -80,6 +88,12 @@ class UserController extends Controller
 
         $user->update($data);
 
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'activity' => 'Update Petugas',
+            'description' => sprintf('Memperbarui petugas %s (%s)', $user->name, $user->email),
+        ]);
+
         return redirect()
             ->route('admin.petugas')
             ->with('success', 'Petugas berhasil diperbarui');
@@ -93,6 +107,12 @@ class UserController extends Controller
         $this->ensurePetugas($user);
 
         $user->delete();
+
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'activity' => 'Hapus Petugas',
+            'description' => sprintf('Menghapus petugas %s (%s)', $user->name, $user->email),
+        ]);
 
         return redirect()
             ->route('admin.petugas')

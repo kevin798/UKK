@@ -9,11 +9,34 @@ class ActivityLogController extends Controller
 {
     public function index()
     {
+        $userId = auth()->id();
+
         $logs = ActivityLog::with('user')
+            ->where('user_id', $userId)
             ->latest()
             ->paginate(10);
 
         return view('user.log-aktivitas', compact('logs'));
+    }
+
+    public function indexAdmin()
+    {
+        $logs = ActivityLog::with('user')
+            ->whereHas('user', fn($q) => $q->where('role', 'admin'))
+            ->latest()
+            ->paginate(10);
+
+        return view('admin.log-aktivitas', compact('logs'));
+    }
+
+    public function indexPetugas()
+    {
+        $logs = ActivityLog::with('user')
+            ->whereHas('user', fn($q) => $q->where('role', 'petugas'))
+            ->latest()
+            ->paginate(10);
+
+        return view('petugas.log-aktivitas', compact('logs'));
     }
 
     public function show($id)

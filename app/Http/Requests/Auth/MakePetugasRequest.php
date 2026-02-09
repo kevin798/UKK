@@ -21,6 +21,8 @@ class MakePetugasRequest extends FormRequest
      */
     public function rules(): array
     {
+        $userId = $this->route('user')?->id ?? $this->route('user') ?? $this->route('id');
+
         $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -30,12 +32,22 @@ class MakePetugasRequest extends FormRequest
         if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
             $rules =[
                 'name' => 'sometimes|string|max:255',
-                'email' => 'sometimes|string|email|max:255|unique:users,email,' . $this->route('id'),
-                'password' => 'sometimes|string|min:8|confirmed',
+                'email' => 'sometimes|string|email|max:255|unique:users,email,' . $userId,
+                'password' => 'nullable|string|min:8',
             ];
         }
 
         return $rules;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if (($this->isMethod('PUT') || $this->isMethod('PATCH')) && $this->has('password')) {
+            // treat empty input as null so nullable rule passes and password is not validated/updated
+            if (trim((string) $this->input('password')) === '') {
+                $this->merge(['password' => null]);
+            }
+        }
     }
 
     public function messages(): array
@@ -52,7 +64,6 @@ class MakePetugasRequest extends FormRequest
             'password.required' => 'Password wajib diisi.',
             'password.string' => 'Password harus berupa teks.',
             'password.min' => 'Password minimal 8 karakter.',
-            'password.confirmed' => 'Konfirmasi password tidak sesuai.',
         ];
     }
 }

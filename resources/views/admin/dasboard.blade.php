@@ -95,70 +95,64 @@
 
                 {{-- Header Tabel --}}
                 <div class="card-header bg-dark py-3 d-flex align-items-center justify-content-between border-0">
-                    <h5 class="fw-bold text-white mb-0">Riwayat Peminjaman User</h5>
-                    <a href="#" class="btn btn-sm btn-outline-light px-3 rounded-pill">
-                        Lihat Semua
-                    </a>
+                    <h5 class="fw-bold text-white mb-0">Riwayat Peminjaman Terbaru</h5>
                 </div>
 
                 <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
+                    @if(isset($recentLoans) && $recentLoans->count())
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
 
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="py-3 small text-uppercase fw-bold text-muted">Nama User</th>
-                                    <th class="py-3 small text-uppercase fw-bold text-muted">Nama Alat</th>
-                                    <th class="py-3 small text-uppercase fw-bold text-muted text-center">Tanggal Pinjam</th>
-                                    <th class="py-3 small text-uppercase fw-bold text-muted text-center">Tanggal Kembali</th>
-                                    <th class="py-3 small text-uppercase fw-bold text-muted text-center">petugas</th>
-                                    <th class="py-3 small text-uppercase fw-bold text-muted text-center">Status</th>
-                                </tr>
-                            </thead>
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="py-3 small text-uppercase fw-bold text-muted">User</th>
+                                        <th class="py-3 small text-uppercase fw-bold text-muted">Alat</th>
+                                        <th class="py-3 small text-uppercase fw-bold text-muted text-center">Mulai</th>
+                                        <th class="py-3 small text-uppercase fw-bold text-muted text-center">Kembali</th>
+                                        <th class="py-3 small text-uppercase fw-bold text-muted text-center">Status</th>
+                                    </tr>
+                                </thead>
 
-                            <tbody class="bg-white">
-                                <tr>
-                                    <td class="fw-bold text-dark">Andi Pratama</td>
-                                    <td class="text-muted">Bor Listrik</td>
-                                    <td class="text-center text-muted">10 Jan 2026</td>
-                                    <td class="text-center text-muted">15 Jan 2026</td>
-                                    <td class="text-center px-4 fw-bold">Imam</td>
-                                    <td class="text-center px-4">
-                                        <span class="badge bg-warning-subtle text-warning px-3">
-                                            Dipinjam
-                                        </span>
-                                    </td>
-                                </tr>
+                                <tbody class="bg-white">
+                                    @foreach($recentLoans as $loan)
+                                        <tr>
+                                            <td class="fw-bold text-dark">
+                                                {{ $loan->user->name ?? 'User#'.$loan->user_id }}
+                                                <div class="small text-muted">{{ $loan->user->email ?? '' }}</div>
+                                            </td>
+                                            <td class="text-muted">
+                                                {{ $loan->alat->nama ?? $loan->alat->nama_alat ?? 'Alat#'.$loan->alat_id }}
+                                            </td>
+                                            <td class="text-center text-muted">
+                                                {{ \Carbon\Carbon::parse($loan->tanggal_mulai)->format('d M Y') }}
+                                            </td>
+                                            <td class="text-center text-muted">
+                                                {{ \Carbon\Carbon::parse($loan->tanggal_selesai)->format('d M Y') }}
+                                            </td>
+                                            <td class="text-center px-4">
+                                                @if($loan->status === 'pending')
+                                                    <span class="badge bg-warning-subtle text-warning px-3">Pending</span>
+                                                @elseif($loan->status === 'approved')
+                                                    <span class="badge bg-success-subtle text-success px-3">Disetujui</span>
+                                                @elseif($loan->status === 'returned')
+                                                    <span class="badge bg-primary-subtle text-primary px-3">Dikembalikan</span>
+                                                @else
+                                                    <span class="badge bg-danger-subtle text-danger px-3">Ditolak</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
 
-                                <tr>
-                                    <td class="fw-bold text-dark">Siti Aisyah</td>
-                                    <td class="text-muted">Vacuum Cleaner</td>
-                                    <td class="text-center text-muted">05 Jan 2026</td>
-                                    <td class="text-center text-muted">08 Jan 2026</td>
-                                    <td class="text-center px-4 fw-bold">Rokim</td>
-                                    <td class="text-end px-4">
-                                        <span class="badge bg-success-subtle text-success px-3">
-                                            Dikembalikan
-                                        </span>
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td class="fw-bold text-dark">Budi Santoso</td>
-                                    <td class="text-muted">Kabel Roll</td>
-                                    <td class="text-center text-muted">01 Jan 2026</td>
-                                    <td class="text-center text-muted">03 Jan 2026</td>
-                                    <td class="text-center px-4 fw-bold">Eko</td>
-                                    <td class="text-end px-4">
-                                        <span class="badge bg-success-subtle text-success px-3">
-                                            Dikembalikan
-                                        </span>
-                                    </td>
-                                </tr>
-                            </tbody>
-
-                        </table>
-                    </div>
+                            </table>
+                        </div>
+                    @else
+                        <div class="p-4">
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle me-2"></i>Tidak ada riwayat peminjaman.
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
             </div>

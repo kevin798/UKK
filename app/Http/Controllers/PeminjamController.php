@@ -24,13 +24,19 @@ class PeminjamController extends Controller
             ->count();
         
         $totalLoans = Peminjaman::where('user_id', $user->id)->count();
+
+        $recentLoans = Peminjaman::with('alat')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->take(5)
+            ->get();
         
         return view('user.dasboard', compact(
             'activeLoans', 
             'pendingLoans', 
             'approvedLoans', 
-            'totalLoans'
+            'totalLoans',
+            'recentLoans'
         ));
     }
 }
-

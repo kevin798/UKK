@@ -2,7 +2,7 @@
 @section('title', 'Detail Peminjaman')
 
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid px-3 px-md-4 pb-5">
     <div class="mb-4">
         <a href="{{ route('user.peminjaman') }}" class="btn btn-sm btn-secondary">
             <i class="bi bi-arrow-left me-1"></i>Kembali
@@ -121,11 +121,51 @@
                 <div class="alert alert-success mt-3 border-start border-success border-4">
                     <h6 class="fw-bold"><i class="bi bi-check-circle me-2"></i>Peminjaman Disetujui</h6>
                     <p class="mb-0 small mt-2">Peminjaman Anda telah disetujui. Silakan ambil alat sesuai jadwal yang telah ditentukan.</p>
+
+                    <!-- Form pengembalian oleh user -->
+                    <form action="{{ route('user.peminjaman.return', $peminjaman->id) }}" method="POST" class="mt-3" onsubmit="return confirm('Tandai peminjaman ini telah dikembalikan?')">
+                        @csrf
+                        <button class="btn btn-primary btn-sm">
+                            <i class="bi bi-arrow-repeat me-1"></i> Saya telah mengembalikan
+                        </button>
+                    </form>
                 </div>
             @elseif($peminjaman->status === 'returned')
                 <div class="alert alert-primary mt-3 border-start border-primary border-4">
                     <h6 class="fw-bold"><i class="bi bi-arrow-clockwise me-2"></i>Peminjaman Dikembalikan</h6>
                     <p class="mb-0 small mt-2">Anda telah mengembalikan alat. Terima kasih.</p>
+                </div>
+            @endif
+
+            @if(($peminjaman->denda_amount ?? 0) > 0)
+                <div class="alert alert-warning mt-3 border-start border-warning border-4">
+                    <h6 class="fw-bold mb-1"><i class="bi bi-cash-coin me-2"></i>Denda</h6>
+                    <p class="mb-1 small">
+                        Nominal: <strong>Rp {{ number_format($peminjaman->denda_amount, 0, ',', '.') }}</strong>
+                        (Status: {{ strtoupper($peminjaman->denda_status ?? 'unpaid') }})
+                    </p>
+                    @if($peminjaman->keterlambatan_hari)
+                        <p class="mb-1 small">Keterlambatan: {{ $peminjaman->keterlambatan_hari }} hari.</p>
+                    @endif
+                    @if($peminjaman->denda_reason)
+                        <p class="mb-0 small text-muted">Catatan: {{ $peminjaman->denda_reason }}</p>
+                    @endif
+
+                    @if(($peminjaman->denda_status ?? 'unpaid') !== 'paid')
+                        <form action="{{ route('user.peminjaman.pay-fine', $peminjaman->id) }}"
+                              method="POST" class="mt-3"
+                              onsubmit="return confirm('Tandai denda telah dibayar?')">
+                            @csrf
+                            <div class="mb-2">
+                                <label class="form-label small mb-1">Catatan pembayaran (opsional)</label>
+                                <input type="text" name="catatan_pembayaran" class="form-control form-control-sm"
+                                       placeholder="Contoh: sudah transfer via bank">
+                            </div>
+                            <button class="btn btn-sm btn-success">
+                                <i class="bi bi-check2-circle me-1"></i> Tandai Sudah Bayar
+                            </button>
+                        </form>
+                    @endif
                 </div>
             @endif
         </div>

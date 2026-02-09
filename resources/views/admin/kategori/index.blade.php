@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container pt-4">
+<div class="container-fluid px-3 px-md-4 pb-5">
     <div class="card border-0 shadow-sm">
         <div class="card-body">
 
@@ -26,21 +26,20 @@
                 </div>
             @endif
 
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Nama Kategori</th>
-                        <th>Deskripsi</th>
-                        <th class="text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($kategori as $item)
-                    <tr>
-                        <td class="fw-medium">{{ $item->nama }}</td>
-                        <td>{{ $item->deskripsi ?? '-' }}</td>
-                        <td class="text-center align-middle">
-                            <div class="d-flex justify-content-center gap-2">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nama Kategori</th>
+                            <th class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($kategori as $item)
+                        <tr>
+                            <td class="fw-medium">{{ $item->nama }}</td>
+                            <td class="text-center align-middle">
+                                <div class="d-flex justify-content-center gap-2 flex-wrap">
                                 <a href="{{ route('kategori.edit', $item->id) }}"
                                     class="btn btn-sm btn-outline-primary rounded-pill px-3">
                                     Edit
@@ -54,21 +53,21 @@
                                         Hapus
                                     </button>
                                 </form>
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="3" class="text-center py-4 text-muted">
-                            Tidak ada data kategori
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="3" class="text-center py-4 text-muted">
+                                Tidak ada data kategori
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
         </div>
     </div>
 </div>
 @endsection
-

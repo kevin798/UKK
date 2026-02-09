@@ -19,6 +19,13 @@ class Peminjaman extends Model
         'tanggal_selesai',
         'status',
         'keterangan',
+        'denda_amount',
+        'denda_status',
+        'denda_type',
+        'denda_reason',
+        'denda_set_by',
+        'keterlambatan_hari',
+        'kondisi_pengembalian',
     ];
 
     public function user()
@@ -29,5 +36,10 @@ class Peminjaman extends Model
     public function alat()
     {
         return $this->belongsTo(Alat::class);
+    }
+
+    public function dendaSetter()
+    {
+        return $this->belongsTo(User::class, 'denda_set_by');
     }
 }

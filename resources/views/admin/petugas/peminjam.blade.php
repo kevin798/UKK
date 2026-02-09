@@ -46,14 +46,14 @@
                             <td class="fw-medium">{{ $item->name }}</td>
                             <td class="text-muted">{{ $item->email }}</td>
                             <td>
-                                <span class="badge 
+                                <span class="badge
                                     {{ $item->role === 'admin' ? 'bg-primary' : 'bg-secondary' }}">
                                     {{ ucfirst($item->role) }}
                                 </span>
                             </td>
                             <td>{{ $item->created_at->format('d M Y') }}</td>
                             <td class="text-center">
-                                <div class="d-inline-flex gap-1">
+                                <div class="d-flex justify-content-center gap-1 flex-wrap">
                                     <a href="{{ route('admin.peminjam.edit', $item->id) }}"
                                        class="btn btn-sm btn-outline-primary rounded-pill px-3">
                                         Edit
