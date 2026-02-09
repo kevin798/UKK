@@ -51,6 +51,7 @@
                             <th>Mulai</th>
                             <th>Jadwal Kembali</th>
                             <th>Status</th>
+                            <th>Kondisi</th>
                             <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
@@ -87,6 +88,21 @@
                                 @endif
                             </td>
 
+                            <!-- KONDISI -->
+                            <td>
+                                @if($p->status !== 'approved')
+                                    @if($p->kondisi_pengembalian)
+                                        <span class="badge {{ $p->kondisi_pengembalian === 'baik' ? 'bg-success' : ($p->kondisi_pengembalian === 'rusak' ? 'bg-warning text-dark' : ($p->kondisi_pengembalian === 'hilang' ? 'bg-danger' : 'bg-secondary')) }}">
+                                            {{ ucfirst($p->kondisi_pengembalian) }}
+                                        </span>
+                                    @else
+                                        <span class="text-muted small">-</span>
+                                    @endif
+                                @else
+                                    <span class="text-muted small">-</span>
+                                @endif
+                            </td>
+
                             <!-- AKSI -->
                             <td class="text-center">
                                 @if($p->status === 'approved')
@@ -96,12 +112,131 @@
                                         <i class="bi bi-check2-circle me-1"></i> Terima
                                     </button>
                                 @else
-                                    <span class="text-muted small">Selesai</span>
+                                    <button class="btn btn-sm btn-info"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#detailModal{{ $p->id }}">
+                                        <i class="bi bi-eye me-1"></i> Detail
+                                    </button>
                                 @endif
                             </td>
                         </tr>
 
+                        <!-- MODAL DETAIL KONDISI PENGEMBALIAN -->
+                        @if($p->status !== 'approved')
+                        <div class="modal fade" id="detailModal{{ $p->id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-lg modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Detail Kondisi Pengembalian</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <!-- Info Peminjaman -->
+                                        <div class="mb-4">
+                                            <h6 class="fw-bold mb-3">Informasi Peminjaman</h6>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Nama Peminjam</small>
+                                                    <strong>{{ $p->user->name ?? '-' }}</strong>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Alat yang Dipinjam</small>
+                                                    <strong>{{ $p->alat->nama ?? '-' }} ({{ $p->jumlah }} pcs)</strong>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Tanggal Mulai</small>
+                                                    <strong>{{ \Carbon\Carbon::parse($p->tanggal_mulai)->format('d M Y') }}</strong>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Jadwal Kembali</small>
+                                                    <strong>{{ \Carbon\Carbon::parse($p->tanggal_selesai)->format('d M Y') }}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <hr>
+
+                                        <!-- Kondisi Pengembalian -->
+                                        <div class="mb-4">
+                                            <h6 class="fw-bold mb-3">Kondisi Pengembalian</h6>
+                                            <div class="row g-4">
+                                                <!-- Gambar Referensi -->
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block mb-2 fw-semibold">Gambar Referensi Alat</small>
+                                                    @if($p->alat->gambar)
+                                                        <img src="{{ asset('storage/'.$p->alat->gambar) }}"
+                                                             alt="gambar alat"
+                                                             class="rounded shadow-sm w-100"
+                                                             style="max-height: 250px; object-fit: cover;">
+                                                    @else
+                                                        <div class="bg-light rounded p-5 text-center">
+                                                            <i class="bi bi-image fs-1 text-muted"></i>
+                                                            <p class="text-muted mt-2">Tidak ada gambar</p>
+                                                        </div>
+                                                    @endif
+                                                </div>
+
+                                                <!-- Gambar Pengembalian -->
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block mb-2 fw-semibold">Foto Kondisi Saat Dikembalikan</small>
+                                                    @if($p->gambar_pengembalian)
+                                                        <img src="{{ asset('storage/'.$p->gambar_pengembalian) }}"
+                                                             alt="gambar pengembalian"
+                                                             class="rounded shadow-sm w-100"
+                                                             style="max-height: 250px; object-fit: cover;">
+                                                    @else
+                                                        <div class="bg-light rounded p-5 text-center">
+                                                            <i class="bi bi-image fs-1 text-muted"></i>
+                                                            <p class="text-muted mt-2">Tidak ada foto</p>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Status & Catatan -->
+                                        <div class="mb-4">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Status Kondisi</small>
+                                                    <div>
+                                                        <span class="badge {{ $p->kondisi_pengembalian === 'baik' ? 'bg-success' : ($p->kondisi_pengembalian === 'rusak' ? 'bg-warning text-dark' : ($p->kondisi_pengembalian === 'hilang' ? 'bg-danger' : 'bg-secondary')) }}">
+                                                            {{ ucfirst($p->kondisi_pengembalian ?? '-') }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                @if($p->denda_amount > 0)
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Denda</small>
+                                                    <strong class="text-danger">Rp {{ number_format($p->denda_amount, 0, ',', '.') }}</strong>
+                                                </div>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        @if($p->catatan_pengembalian || $p->denda_reason)
+                                        <div class="alert alert-light">
+                                            @if($p->catatan_pengembalian)
+                                                <h6 class="fw-bold mb-2">Catatan Pengembalian</h6>
+                                                <p class="mb-0">{{ $p->catatan_pengembalian }}</p>
+                                            @endif
+                                            @if($p->denda_reason)
+                                                <h6 class="fw-bold mb-2 mt-3">Alasan Denda</h6>
+                                                <p class="mb-0">{{ $p->denda_reason }}</p>
+                                            @endif
+                                        </div>
+                                        @endif
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
                         <!-- MODAL RETURN + DENDA -->
+                        @if($p->status === 'approved')
                         <div class="modal fade" id="returnModal{{ $p->id }}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
@@ -161,6 +296,7 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
                         @endforeach
                     </tbody>
                 </table>

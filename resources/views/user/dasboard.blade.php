@@ -106,34 +106,8 @@
     <!-- ACTION SECTION -->
     <div class="row g-4 mb-4">
 
-        <!-- AJUKAN PEMINJAMAN -->
-        <div class="col-12 col-md-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h6 class="fw-bold mb-1">
-                                Ajukan Peminjaman Baru
-                            </h6>
-                            <p class="text-muted small mb-0">
-                                Pilih alat yang ingin kamu pinjam
-                            </p>
-                        </div>
-                        <span class="badge bg-info bg-opacity-10 text-info p-3 rounded-circle">
-                            <i class="bi bi-plus-lg fs-4"></i>
-                        </span>
-                    </div>
-
-                    <a href="{{ route('user.peminjaman.create') }}"
-                       class="btn btn-primary btn-sm">
-                        <i class="bi bi-plus me-1"></i> Ajukan Sekarang
-                    </a>
-                </div>
-            </div>
-        </div>
-
         <!-- DAFTAR ALAT -->
-        <div class="col-12 col-md-6">
+        <div class="col-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">

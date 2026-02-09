@@ -26,6 +26,8 @@ class Peminjaman extends Model
         'denda_set_by',
         'keterlambatan_hari',
         'kondisi_pengembalian',
+        'gambar_pengembalian',
+        'catatan_pengembalian',
     ];
 
     public function user()

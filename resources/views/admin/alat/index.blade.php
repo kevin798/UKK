@@ -41,6 +41,15 @@
             </div>
             @endif
 
+            <style>
+                .table td.keterangan-cell {
+                    max-width: 250px;
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
+                    white-space: normal;
+                }
+            </style>
+
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
@@ -75,7 +84,7 @@
                             </td>
 
                             <td>{{ $item->jumlah }}</td>
-                            <td>{{ $item->keterangan ?? '-' }}</td>
+                            <td class="keterangan-cell">{{ $item->keterangan ?? '-' }}</td>
 
 
                             <td class="text-center align-middle">

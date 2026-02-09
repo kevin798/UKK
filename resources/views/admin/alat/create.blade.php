@@ -55,10 +55,11 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="keterangan" class="form-label fw-medium">Keterangan</label>
-                    <textarea id="keterangan" name="keterangan" rows="4"
+                    <label for="keterangan" class="form-label fw-medium">Keterangan </label>
+                    <textarea id="keterangan" name="keterangan" rows="4" maxlength="150"
                               class="form-control @error('keterangan') is-invalid @enderror"
                               placeholder="Masukkan keterangan">{{ old('keterangan') }}</textarea>
+                    <small class="d-block mt-1 text-muted"><span id="char-count">0</span>/150 karakter</small>
                     @error('keterangan')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -87,5 +88,17 @@
         </div>
     </div>
 </div>
+
+<script>
+    const keteranganInput = document.getElementById('keterangan');
+    const charCount = document.getElementById('char-count');
+
+    keteranganInput.addEventListener('input', function() {
+        charCount.textContent = this.value.length;
+    });
+
+    // Initialize character count on page load
+    charCount.textContent = keteranganInput.value.length;
+</script>
 @endsection
 

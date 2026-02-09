@@ -138,11 +138,32 @@ class PeminjamanController extends Controller
             return Redirect::back()->with('error', 'Alat tidak ditemukan.');
         }
 
-        DB::transaction(function () use ($peminjaman, $alat) {
+        // Validate request
+        $request->validate([
+            'kondisi' => 'required|in:baik,rusak,hilang',
+            'gambar_pengembalian' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'catatan' => 'nullable|string|max:1000',
+        ]);
+
+        DB::transaction(function () use ($request, $peminjaman, $alat) {
+            $data = [
+                'status' => 'returned',
+                'kondisi_pengembalian' => $request->input('kondisi'),
+                'catatan_pengembalian' => $request->input('catatan'),
+            ];
+
+            // Handle image upload
+            if ($request->hasFile('gambar_pengembalian')) {
+                $file = $request->file('gambar_pengembalian');
+                $filename = 'pengembalian/' . time() . '_' . $file->getClientOriginalName();
+                $file->storeAs('public', $filename);
+                $data['gambar_pengembalian'] = $filename;
+            }
+
+            $peminjaman->update($data);
+
             $alat->jumlah = $alat->jumlah + $peminjaman->jumlah;
             $alat->save();
-
-            $peminjaman->update(['status' => 'returned']);
         });
 
         return Redirect::route('user.peminjaman')
