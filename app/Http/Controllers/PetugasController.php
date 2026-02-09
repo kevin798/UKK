@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Peminjaman;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use App\Models\Alat;
 use App\Models\ActivityLog;
@@ -36,7 +37,7 @@ class PetugasController extends Controller
     public function showPengembalianList()
     {
         $peminjamans = Peminjaman::with('user', 'alat')
-            ->whereIn('status', ['approved', 'returned'])
+            ->whereIn('status', ['return_requested', 'returned'])
             ->orderBy('tanggal_selesai', 'asc')
             ->get();
 
@@ -45,12 +46,53 @@ class PetugasController extends Controller
 
     public function dendaList()
     {
-        $dendaList = Peminjaman::with(['user', 'alat'])
+        $base = Peminjaman::with(['user', 'alat'])
             ->where('denda_amount', '>', 0)
+            ->where('denda_set_by', auth()->id());
+
+        $dendaList = (clone $base)
             ->latest()
             ->paginate(15);
 
-        return view('petugas.denda', compact('dendaList'));
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+
+        $monthQuery = (clone $base)
+            ->whereMonth('updated_at', $currentMonth)
+            ->whereYear('updated_at', $currentYear);
+
+        $summary = [
+            'total_nominal' => $monthQuery->sum('denda_amount'),
+            'total_kasus' => (clone $monthQuery)->count(),
+            'belum_lunas' => (clone $monthQuery)->where('denda_status', 'unpaid')->count(),
+            'lunas' => (clone $monthQuery)->where('denda_status', 'paid')->count(),
+        ];
+
+        $recentReasons = (clone $base)
+            ->select('user_id', 'denda_reason', 'denda_amount', 'updated_at')
+            ->whereNotNull('denda_reason')
+            ->latest('updated_at')
+            ->take(5)
+            ->get();
+
+        return view('petugas.denda', compact('dendaList', 'summary', 'recentReasons'));
+    }
+
+    public function dendaPrint(Request $request)
+    {
+        $dendaList = Peminjaman::with(['user', 'alat'])
+            ->where('denda_amount', '>', 0)
+            ->where('denda_set_by', auth()->id())
+            ->latest()
+            ->get();
+
+        $totals = [
+            'nominal' => $dendaList->sum('denda_amount'),
+            'kasus'   => $dendaList->count(),
+        ];
+
+        $view = view('petugas.denda_print', compact('dendaList', 'totals'));
+        return $view;
     }
 
     public function updateDenda(Request $request, Peminjaman $peminjaman)
@@ -144,8 +186,8 @@ class PetugasController extends Controller
     {
         $peminjaman = Peminjaman::with('alat')->findOrFail($id);
 
-        if ($peminjaman->status !== 'approved') {
-            return redirect()->back()->with('warning', 'Hanya peminjaman yang berstatus approved yang dapat dikembalikan.');
+        if ($peminjaman->status !== 'return_requested') {
+            return redirect()->back()->with('warning', 'Pengembalian belum diajukan oleh pengguna.');
         }
 
         $alat = $peminjaman->alat;
@@ -154,7 +196,7 @@ class PetugasController extends Controller
         }
 
         $validated = $request->validate([
-            'kondisi_pengembalian' => 'required|string|in:baik,rusak,hilang,terlambat',
+            'status_barang' => 'required|string|in:baik,rusak,hilang,terlambat',
             'denda_amount' => 'nullable|numeric|min:0',
             'denda_reason' => 'nullable|string|max:1000',
             'denda_type' => 'nullable|string|max:50',
@@ -178,12 +220,13 @@ class PetugasController extends Controller
 
             $peminjaman->update([
                 'status' => 'returned',
-                'kondisi_pengembalian' => $validated['kondisi_pengembalian'],
+                'kondisi_pengembalian' => $validated['status_barang'],
+                'status_barang' => $validated['status_barang'],
                 'denda_amount' => $finalFine,
                 'denda_status' => ($finalFine ?? 0) > 0 ? 'unpaid' : 'none',
                 'denda_reason' => $validated['denda_reason'] ?? null,
                 'denda_type' => $validated['denda_type']
-                    ?? ($hariTerlambat > 0 ? 'terlambat' : $validated['kondisi_pengembalian']),
+                    ?? ($hariTerlambat > 0 ? 'terlambat' : $validated['status_barang']),
                 'denda_set_by' => auth()->id(),
                 'keterlambatan_hari' => $hariTerlambat,
             ]);
@@ -197,7 +240,7 @@ class PetugasController extends Controller
                 'description' => sprintf(
                     'Terima pengembalian %s. Kondisi: %s. Denda: Rp%s (terlambat %s hari).',
                     $peminjaman->alat->nama ?? $peminjaman->alat->nama_alat ?? 'Alat#'.$peminjaman->alat_id,
-                    $validated['kondisi_pengembalian'],
+                    $validated['status_barang'],
                     number_format($finalFine ?? 0, 0, ',', '.'),
                     $hariTerlambat
                 ),

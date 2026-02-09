@@ -15,6 +15,10 @@ class PeminjamController extends Controller
             ->where('status', 'approved')
             ->count();
         
+        $returnRequested = Peminjaman::where('user_id', $user->id)
+            ->where('status', 'return_requested')
+            ->count();
+        
         $pendingLoans = Peminjaman::where('user_id', $user->id)
             ->where('status', 'pending')
             ->count();
@@ -35,6 +39,7 @@ class PeminjamController extends Controller
             'activeLoans', 
             'pendingLoans', 
             'approvedLoans', 
+            'returnRequested',
             'totalLoans',
             'recentLoans'
         ));

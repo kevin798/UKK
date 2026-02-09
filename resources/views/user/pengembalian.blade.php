@@ -47,6 +47,7 @@
                             <th>Jumlah</th>
                             <th>Mulai</th>
                             <th>Jadwal Kembali</th>
+                            <th>Foto</th>
                             <th>Status</th>
                             <th>Denda</th>
                             <th class="text-center">Aksi</th>
@@ -64,14 +65,39 @@
                             <td>{{ \Carbon\Carbon::parse($p->tanggal_mulai)->format('d/m/Y') }}</td>
                             <td>{{ \Carbon\Carbon::parse($p->tanggal_selesai)->format('d/m/Y') }}</td>
                             <td>
+                                @php
+                                    $path = $p->foto_pengembalian;
+                                    if ($path && str_starts_with($path, 'public/')) {
+                                        $path = \Illuminate\Support\Str::after($path, 'public/');
+                                    }
+                                    $fotoUrl = $path ? asset('storage/'.$path) : null;
+                                @endphp
+                                @if($fotoUrl)
+                                    <a href="{{ $fotoUrl }}" target="_blank">
+                                        <img src="{{ $fotoUrl }}"
+                                             alt="Foto pengembalian"
+                                             style="width:56px; height:56px; object-fit:cover; border-radius:6px;">
+                                    </a>
+                                @else
+                                    <span class="text-muted small">-</span>
+                                @endif
+                            </td>
+                            <td>
                                 @if($p->status === 'approved')
                                     <span class="badge bg-warning text-dark">
                                         <i class="bi bi-hourglass-split me-1"></i> Belum dikembalikan
+                                    </span>
+                                @elseif($p->status === 'return_requested')
+                                    <span class="badge bg-info text-dark">
+                                        <i class="bi bi-send-check me-1"></i> Menunggu verifikasi petugas
                                     </span>
                                 @else
                                     <span class="badge bg-primary">
                                         <i class="bi bi-arrow-repeat me-1"></i> Sudah dikembalikan
                                     </span>
+                                @endif
+                                @if($p->status_barang)
+                                    <div class="small text-muted mt-1">Status barang: {{ ucfirst($p->status_barang) }}</div>
                                 @endif
                             </td>
                             <td>
@@ -89,14 +115,11 @@
                             </td>
                             <td class="text-center">
                                 @if($p->status === 'approved')
-                                    <form action="{{ route('user.peminjaman.return', $p->id) }}"
-                                          method="POST"
-                                          onsubmit="return confirm('Tandai peminjaman ini sudah dikembalikan?')">
-                                        @csrf
-                                        <button class="btn btn-sm btn-primary">
-                                            <i class="bi bi-arrow-repeat me-1"></i> Saya sudah kembalikan
-                                        </button>
-                                    </form>
+                                    <button class="btn btn-sm btn-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#returnUserModal{{ $p->id }}">
+                                        <i class="bi bi-arrow-repeat me-1"></i> Saya sudah kembalikan
+                                    </button>
                                 @elseif(($p->denda_amount ?? 0) > 0 && ($p->denda_status ?? 'unpaid') !== 'paid')
                                     <form action="{{ route('user.peminjaman.pay-fine', $p->id) }}"
                                           method="POST"
@@ -120,6 +143,39 @@
                 </table>
             </div>
         </div>
+
+        @foreach($peminjamans as $p)
+        @if($p->status === 'approved')
+        <div class="modal fade" id="returnUserModal{{ $p->id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form action="{{ route('user.peminjaman.return', $p->id) }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="modal-header">
+                            <h5 class="modal-title">Konfirmasi Pengembalian</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Catatan Kondisi</label>
+                                <textarea name="catatan_pengembalian" rows="3" class="form-control" placeholder="Deskripsikan kondisi alat saat dikembalikan (opsional)"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Foto Kondisi (wajib)</label>
+                                <input type="file" name="foto_pengembalian" accept="image/*" class="form-control" required>
+                                <small class="text-muted">Unggah foto alat saat dikembalikan.</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary">Kirim Pengembalian</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        @endif
+        @endforeach
     @endif
 
 </div>

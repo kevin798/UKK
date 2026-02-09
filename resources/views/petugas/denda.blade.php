@@ -4,12 +4,81 @@
 @section('content')
 <div class="container-fluid px-3 px-md-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
             <h4 class="fw-bold mb-1">Denda yang Saya Tetapkan</h4>
-            <p class="text-muted small mb-0">Daftar denda untuk peminjam yang Anda proses</p>
+            <p class="text-muted small mb-0">Ringkasan denda bulan {{ now()->translatedFormat('F Y') }}</p>
         </div>
     </div>
+
+    @isset($summary)
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted small mb-1">Total Denda Bulan Ini</p>
+                    <h4 class="fw-bold text-danger mb-0">Rp {{ number_format($summary['total_nominal'] ?? 0,0,',','.') }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted small mb-1">Kasus Denda</p>
+                    <h4 class="fw-bold mb-0">{{ $summary['total_kasus'] ?? 0 }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted small mb-1">Belum Lunas</p>
+                    <h4 class="fw-bold text-warning mb-0">{{ $summary['belum_lunas'] ?? 0 }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted small mb-1">Lunas</p>
+                    <h4 class="fw-bold text-success mb-0">{{ $summary['lunas'] ?? 0 }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endisset
+
+    @isset($recentReasons)
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light border-0 py-3">
+            <h6 class="fw-bold mb-0">Alasan Denda Terakhir</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr class="text-uppercase small text-muted">
+                        <th>Peminjam</th>
+                        <th>Nominal</th>
+                        <th>Alasan</th>
+                        <th>Waktu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($recentReasons as $row)
+                    <tr>
+                        <td>{{ $row->user->name ?? 'User#'.$row->user_id }}</td>
+                        <td class="fw-bold text-danger">Rp {{ number_format($row->denda_amount,0,',','.') }}</td>
+                        <td class="text-muted small" style="max-width:280px; white-space:pre-wrap;">{{ $row->denda_reason }}</td>
+                        <td class="text-muted small">{{ \Carbon\Carbon::parse($row->updated_at)->format('d M Y H:i') }}</td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="4" class="text-center text-muted py-3">Belum ada alasan tercatat.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endisset
 
     @if($dendaList->count())
         <div class="card border-0 shadow-sm">
@@ -106,8 +175,14 @@
                     </tbody>
                 </table>
             </div>
-            <div class="card-footer bg-white border-0">
-                {{ $dendaList->links() }}
+            <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="text-muted small">Total {{ $dendaList->total() }} catatan denda</span>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('petugas.denda.cetak') }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-printer me-1"></i> Cetak
+                    </a>
+                    {{ $dendaList->links() }}
+                </div>
             </div>
         </div>
     @else

@@ -50,6 +50,7 @@
                             <th>Jumlah</th>
                             <th>Mulai</th>
                             <th>Jadwal Kembali</th>
+                            <th>Foto</th>
                             <th>Status</th>
                             <th class="text-center">Aksi</th>
                         </tr>
@@ -73,23 +74,42 @@
                             <!-- TANGGAL -->
                             <td>{{ \Carbon\Carbon::parse($p->tanggal_mulai)->format('d/m/Y') }}</td>
                             <td>{{ \Carbon\Carbon::parse($p->tanggal_selesai)->format('d/m/Y') }}</td>
+                            <td>
+                                @php
+                                    $path = $p->foto_pengembalian;
+                                    if ($path && str_starts_with($path, 'public/')) {
+                                        $path = \Illuminate\Support\Str::after($path, 'public/');
+                                    }
+                                    $fotoUrl = $path ? asset('storage/'.$path) : null;
+                                    $thumbUrl = $fotoUrl
+                                        ? $fotoUrl
+                                        : 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2272%22 height=%2272%22><rect width=%22100%%22 height=%22100%%22 fill=%22%23f8f9fa%22/><text x=%2250%%22 y=%2250%%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%236c757d%22 font-size=%2210%22 font-family=%22Arial%2C sans-serif%22>No Foto</text></svg>';
+                                @endphp
+                                <a href="{{ $fotoUrl ?? '#' }}" target="{{ $fotoUrl ? '_blank' : '_self' }}">
+                                    <img src="{{ $thumbUrl }}"
+                                         alt="Foto pengembalian"
+                                         style="width:56px; height:56px; object-fit:cover; border-radius:6px;">
+                                </a>
+                            </td>
 
                             <!-- STATUS -->
                             <td>
-                                @if($p->status === 'approved')
+                                @if($p->status === 'return_requested')
                                     <span class="badge bg-warning text-dark">
-                                        <i class="bi bi-hourglass-split me-1"></i> Belum dikembalikan
+                                        <i class="bi bi-hourglass-split me-1"></i> Menunggu verifikasi
                                     </span>
-                                @else
+                                @elseif($p->status === 'returned')
                                     <span class="badge bg-primary">
                                         <i class="bi bi-arrow-repeat me-1"></i> Sudah dikembalikan
                                     </span>
+                                @else
+                                    <span class="badge bg-secondary">-</span>
                                 @endif
                             </td>
 
                             <!-- AKSI -->
                             <td class="text-center">
-                                @if($p->status === 'approved')
+                                @if($p->status === 'return_requested')
                                     <button class="btn btn-sm btn-primary"
                                             data-bs-toggle="modal"
                                             data-bs-target="#returnModal{{ $p->id }}">
@@ -128,15 +148,32 @@
                                                 </div>
                                             </div>
 
+                                            @php
+                                                $modalPath = $p->foto_pengembalian;
+                                                if ($modalPath && str_starts_with($modalPath, 'public/')) {
+                                                    $modalPath = \Illuminate\Support\Str::after($modalPath, 'public/');
+                                                }
+                                                $fotoUrl = $modalPath
+                                                    ? asset('storage/'.$modalPath)
+                                                    : 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22><rect width=%22100%%22 height=%22100%%22 fill=%22%23f8f9fa%22/><text x=%2250%%22 y=%2250%%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%236c757d%22 font-size=%2216%22 font-family=%22Arial%2C sans-serif%22>Tidak ada foto</text></svg>';
+                                            @endphp
+                                            <div class="mb-3 text-center">
+                                                <div class="mb-2 fw-semibold">Foto Pengembalian</div>
+                                                <img src="{{ $fotoUrl }}"
+                                                     alt="Foto pengembalian"
+                                                     class="img-fluid rounded border"
+                                                     style="max-height:220px; object-fit:cover;">
+                                            </div>
+
                                             <div class="mb-3">
-                                                <label class="form-label">Kondisi Pengembalian</label>
-                                                <select name="kondisi_pengembalian" class="form-select" required>
+                                                <label class="form-label">Status Barang</label>
+                                                <select name="status_barang" class="form-select" required>
                                                     <option value="baik">Baik</option>
                                                     <option value="rusak">Rusak</option>
                                                     <option value="hilang">Hilang</option>
                                                     <option value="terlambat" {{ $lateDays > 0 ? 'selected' : '' }}>Terlambat</option>
                                                 </select>
-                                                <small class="text-muted">Pilih kondisi barang saat dikembalikan.</small>
+                                                <small class="text-muted">Petugas menentukan status barang saat dikembalikan.</small>
                                             </div>
 
                                             <div class="mb-3">

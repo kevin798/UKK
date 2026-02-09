@@ -22,7 +22,11 @@ class PeminjamanController extends Controller
             ->latest()
             ->get();
 
-        $alats = Alat::all();
+        $alats = Alat::withCount([
+            'peminjaman as dipinjam_count' => function ($q) {
+                $q->whereIn('status', ['approved', 'return_requested']);
+            },
+        ])->get();
 
         // ✅ TAMBAHKAN KATEGORI
         $kategori = Kategori::orderBy('nama')->get();
@@ -36,7 +40,7 @@ class PeminjamanController extends Controller
 
         $peminjamans = Peminjaman::with('alat.kategori')
             ->where('user_id', $user->id)
-            ->whereIn('status', ['approved', 'returned'])
+            ->whereIn('status', ['approved', 'return_requested', 'returned'])
             ->orderBy('tanggal_selesai', 'asc')
             ->get();
 
@@ -45,12 +49,16 @@ class PeminjamanController extends Controller
 
     public function create()
     {
-        $alats = Alat::all();
+        $alats = Alat::withCount([
+            'peminjaman as dipinjam_count' => function ($q) {
+                $q->whereIn('status', ['approved', 'return_requested']);
+            },
+        ])->get();
 
         // ✅ TAMBAHKAN KATEGORI
         $kategori = Kategori::orderBy('nama')->get();
 
-        return view('user.loans', compact('alats', 'kategori'));
+        return view('user.peminjaman_create', compact('alats', 'kategori'));
     }
 
     public function store(Request $request)
@@ -137,29 +145,35 @@ class PeminjamanController extends Controller
     {
         $user = Auth::user();
 
+        $validated = $request->validate([
+            'catatan_pengembalian' => 'nullable|string|max:500',
+            'foto_pengembalian' => 'required|mimes:jpg,jpeg,png,pdf|max:2048',
+        ]);
+
         $peminjaman = Peminjaman::with('alat')
             ->where('id', $id)
             ->where('user_id', $user->id)
             ->firstOrFail();
 
         if ($peminjaman->status !== 'approved') {
-            return Redirect::back()->with('warning', 'Hanya peminjaman yang berstatus approved yang dapat dikembalikan.');
+            return Redirect::back()->with('warning', 'Pengembalian hanya untuk peminjaman berstatus approved.');
         }
 
-        $alat = $peminjaman->alat;
-        if (!$alat) {
-            return Redirect::back()->with('error', 'Alat tidak ditemukan.');
+        $dataUpdate = [
+            'status' => 'return_requested',
+            'kondisi_pengembalian' => null,
+            'status_barang' => null,
+            'catatan_pengembalian' => $validated['catatan_pengembalian'],
+        ];
+
+        if ($request->hasFile('foto_pengembalian')) {
+            $dataUpdate['foto_pengembalian'] = $request->file('foto_pengembalian')->store('pengembalian', 'public');
         }
 
-        DB::transaction(function () use ($peminjaman, $alat) {
-            $alat->jumlah = $alat->jumlah + $peminjaman->jumlah;
-            $alat->save();
+        $peminjaman->update($dataUpdate);
 
-            $peminjaman->update(['status' => 'returned']);
-        });
-
-        return Redirect::route('user.peminjaman')
-            ->with('success', 'Peminjaman berhasil dikembalikan. Terima kasih.');
+        return Redirect::route('user.pengembalian')
+            ->with('success', 'Permintaan pengembalian dikirim. Menunggu verifikasi petugas.');
     }
 
     public function payFine(Request $request, $id)

@@ -59,6 +59,8 @@ class AuthController extends Controller
             'name'     => $payload['name'],
             'email'    => $payload['email'],
             'password' => bcrypt($payload['password']),
+            'phone'    => $payload['phone'] ?? null,
+            'address'  => $payload['address'] ?? null,
             'role'     => 'user', // 🔥 FIX UNDEFINED ROLE
             'is_active'=> true,
         ]);

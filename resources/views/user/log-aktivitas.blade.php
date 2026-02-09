@@ -4,14 +4,15 @@
 @section('content')
 <div class="container-fluid px-3 px-md-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
             <h4 class="fw-bold mb-1">Log Aktivitas</h4>
             <p class="text-muted small mb-0">Catatan aksi yang Anda lakukan</p>
         </div>
-        <span class="badge bg-primary text-white px-3 py-2 rounded-pill">
-            <i class="bi bi-clock-history me-1"></i> Riwayat
-        </span>
+        <form method="GET" class="d-flex gap-2">
+            <input type="text" name="q" value="{{ request('q') }}" class="form-control form-control-sm" placeholder="Cari aktivitas">
+            <button class="btn btn-outline-primary btn-sm">Cari</button>
+        </form>
     </div>
 
     @if($logs->count())
@@ -29,7 +30,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($logs as $i => $log)
+                        @forelse($logs as $i => $log)
                         <tr>
                             <td>{{ $i + $logs->firstItem() }}</td>
                             <td><span class="badge bg-primary-subtle text-primary">{{ $log->activity }}</span></td>
@@ -48,7 +49,11 @@
                                 </button>
                             </td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">Tidak ada log aktivitas.</td>
+                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

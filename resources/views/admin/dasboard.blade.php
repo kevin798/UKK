@@ -79,8 +79,6 @@
                         </div>
                     </div>
                     <div class="mt-3">
-                        <span class="badge bg-success-subtle text-success border border-success-subtle">{{ $alatTersedia }} Total</span>
-                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle ms-1">{{ $peminjamanAktif }} Dipinjam</span>
                     </div>
                 </div>
             </div>

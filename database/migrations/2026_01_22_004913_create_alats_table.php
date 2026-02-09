@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('alat', function (Blueprint $table) {
+        Schema::create('alats', function (Blueprint $table) {
             $table->id();
             $table->string('nama');
             $table->foreignId('kategori_id')->constrained()->cascadeOnDelete();
@@ -20,6 +20,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::dropIfExists('alat');
+        Schema::dropIfExists('alats');
     }
 };

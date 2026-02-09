@@ -90,15 +90,11 @@
             </div>
 
             <div>
-                <label class="block text-sm text-gray-600 mb-1">Jenis Kelamin</label>
-                <select name="gender" value="{{ old('gender') }}"
+                <label class="block text-sm text-gray-600 mb-1">Nomor HP</label>
+                <input type="text" name="phone" value="{{ old('phone') }}"
                     class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500
-                    @error('gender') border-red-500 @enderror">
-                    <option value="">Pilih Jenis Kelamin</option>
-                    <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Laki-laki</option>
-                    <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Perempuan</option>
-                </select>
-                @error('gender')
+                    @error('phone') border-red-500 @enderror">
+                @error('phone')
                     <small class="text-red-500 text-xs">{{ $message }}</small>
                 @enderror
             </div>

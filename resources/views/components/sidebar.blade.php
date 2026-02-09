@@ -51,6 +51,11 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('admin.laporan') }}" class="{{ request()->routeIs('admin.laporan') ? $activeClass : $inactiveClass }}">
+                    Laporan Petugas
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('admin.log-aktivitas') }}" class="{{ request()->routeIs('admin.log-aktivitas*') ? $activeClass : $inactiveClass }}">
                     Log Aktivitas
                 </a>
@@ -88,7 +93,14 @@
                 <a href="{{ route('petugas.denda') }}"
                    class="{{ request()->routeIs('petugas.denda') ? $activeClass : $inactiveClass }}">
                     <i class="bi bi-cash-stack"></i>
-                    Denda
+                    Laporan Denda
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('petugas.laporan') }}"
+                   class="{{ request()->routeIs('petugas.laporan') ? $activeClass : $inactiveClass }}">
+                    <i class="bi bi-flag"></i>
+                    Laporan ke Admin
                 </a>
             </li>
             <li>

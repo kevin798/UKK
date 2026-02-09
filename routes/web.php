@@ -11,6 +11,7 @@ use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\PeminjamanController;
 use App\Http\Controllers\PeminjamController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\ReportController;
 
 Route::redirect('/', '/auth/login');
 
@@ -120,11 +121,18 @@ Route::middleware(['auth','active'])->group(function () {
 
         Route::get('petugas/denda', [PetugasController::class, 'dendaList'])
             ->name('petugas.denda');
+        Route::get('petugas/denda/cetak', [PetugasController::class, 'dendaPrint'])
+            ->name('petugas.denda.cetak');
         Route::put('petugas/denda/{peminjaman}', [PetugasController::class, 'updateDenda'])
             ->name('petugas.denda.update');
 
         Route::get('petugas/log-aktivitas', [ActivityLogController::class, 'indexPetugas'])
             ->name('petugas.log-aktivitas');
+
+        Route::get('petugas/laporan', [ReportController::class, 'petugasIndex'])
+            ->name('petugas.laporan');
+        Route::post('petugas/laporan', [ReportController::class, 'store'])
+            ->name('petugas.laporan.store');
     });
 
     Route::middleware(['role:user'])->group(function () {
@@ -168,5 +176,12 @@ Route::middleware(['auth','active'])->group(function () {
 
         Route::get('user/users', [UserController::class, 'userList'])
             ->name('user.users');
+    });
+
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('admin/laporan', [ReportController::class, 'adminIndex'])
+            ->name('admin.laporan');
+        Route::post('admin/laporan/{report}/status', [ReportController::class, 'updateStatus'])
+            ->name('admin.laporan.status');
     });
 });

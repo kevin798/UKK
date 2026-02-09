@@ -4,23 +4,25 @@
 @section('content')
 <div class="container-fluid px-3 px-md-4">
 
-    <div class="mb-4 d-flex justify-content-between align-items-center">
+    <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
             <h4 class="fw-bold mb-1">Log Aktivitas Admin</h4>
             <p class="text-muted small mb-0">Riwayat aktivitas yang dilakukan oleh admin</p>
         </div>
-        <span class="badge bg-primary text-white px-3 py-2 rounded-pill">
-            <i class="bi bi-clock-history me-1"></i> Riwayat
-        </span>
+        <form method="GET" class="d-flex gap-2">
+            <input type="text" name="q" value="{{ request('q') }}" class="form-control form-control-sm" placeholder="Cari pengguna/aktivitas">
+            <button class="btn btn-outline-primary btn-sm">Cari</button>
+        </form>
     </div>
 
     @if($logs->count())
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-light border-0 py-3">
-                <h6 class="fw-bold mb-0">
-                    <i class="bi bi-clock-history me-2"></i>
-                    Log Aktivitas
-                </h6>
+            <div class="card-header bg-light border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h6 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>Log Aktivitas</h6>
+                    <p class="text-muted small mb-0">Pantau semua aksi dan status peminjaman</p>
+                </div>
+                <span class="badge bg-primary-subtle text-primary">Total {{ $logs->total() }}</span>
             </div>
 
             <div class="table-responsive">
@@ -37,7 +39,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($logs as $i => $log)
+                        @forelse($logs as $i => $log)
                         <tr>
                             <td>{{ $i + $logs->firstItem() }}</td>
                             <td>{{ $log->user->name ?? '-' }}</td>
@@ -57,7 +59,11 @@
                                 </button>
                             </td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">Tidak ada log aktivitas.</td>
+                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

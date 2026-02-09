@@ -6,9 +6,9 @@
 
     <!-- HEADER -->
     <div class="mb-4">
-        <h4 class="fw-bold mb-1">Kelola Peminjaman</h4>
+        <h4 class="fw-bold mb-1">Katalog Alat</h4>
         <p class="text-muted small mb-0">
-            Ajukan dan lihat riwayat peminjaman alat Anda
+            Temukan alat yang tersedia, lalu lanjutkan ke form pengajuan
         </p>
     </div>
 
@@ -36,202 +36,107 @@
     @endif
 
     <div class="row g-4 mb-4">
-
-        <!-- FORM PEMINJAMAN -->
-        <div class="col-12 col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-light border-0 py-3">
-                    <h6 class="fw-bold mb-0">
-                        <i class="bi bi-plus-circle me-2"></i>
-                        Ajukan Peminjaman Baru
-                    </h6>
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0 py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-search text-muted"></i>
+                        <input type="text" id="cari-alat" class="form-control form-control-sm" placeholder="Cari alat..." style="min-width: 220px;">
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-filter text-muted"></i>
+                        <select id="filter-kategori" class="form-select form-select-sm" style="min-width: 200px;">
+                            <option value="">Semua kategori</option>
+                            @foreach($kategori as $kat)
+                                <option value="{{ $kat->id }}">{{ $kat->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-
                 <div class="card-body p-4">
-                    <form method="POST" action="{{ route('user.peminjaman.store') }}">
-                        @csrf
-
-                        <!-- KATEGORI -->
-                        <div class="mb-3">
-                            <label class="form-label fw-medium">Kategori</label>
-                            <select name="kategori_id" id="kategori_id"
-                                class="form-select @error('kategori_id') is-invalid @enderror"
-                                required>
-                                <option value="">-- Pilih Kategori --</option>
-                                @foreach($kategori as $kat)
-                                    <option value="{{ $kat->id }}"
-                                        @selected(old('kategori_id') == $kat->id)>
-                                        {{ $kat->nama }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('kategori_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                    @if($alats->isEmpty())
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle me-2"></i>Belum ada alat yang tersedia.
                         </div>
-
-                        <!-- ALAT -->
-                        <div class="mb-3">
-                            <label class="form-label fw-medium">Nama Alat</label>
-                            <select name="alat_id" id="alat_id"
-                                class="form-select @error('alat_id') is-invalid @enderror"
-                                disabled required>
-                                <option value="">-- Pilih Alat --</option>
-                                @foreach($alats as $alat)
-                                    <option value="{{ $alat->id }}"
-                                        data-kategori="{{ $alat->kategori_id }}"
-                                        data-foto="{{ $alat->foto ? asset('storage/'.$alat->foto) : '' }}"
-                                        @selected(old('alat_id') == $alat->id)>
-                                        {{ $alat->nama ?? $alat->nama_alat ?? 'Alat #'.$alat->id }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('alat_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                    @else
+                        <div class="row g-3" id="list-alat">
+                            @foreach($alats as $alat)
+                                @php
+                                    $fotoAlat = $alat->gambar ? asset('storage/'.$alat->gambar) : null;
+                                @endphp
+                                <div class="col-12 col-md-6 col-xl-4 alat-item"
+                                     data-nama="{{ Str::lower($alat->nama ?? $alat->nama_alat ?? 'Alat #'.$alat->id) }}"
+                                     data-kategori="{{ $alat->kategori_id }}">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        <div class="ratio ratio-4x3 bg-light rounded-top overflow-hidden">
+                                            <img src="{{ $fotoAlat ?? '' }}"
+                                                 alt="Foto {{ $alat->nama ?? 'Alat' }}"
+                                                 class="w-100 h-100"
+                                                 style="object-fit: cover;"
+                                                 onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22600%22 height=%22400%22><rect width=%22100%%22 height=%22100%%22 fill=%22%23f8f9fa%22/><text x=%2250%%22 y=%2250%%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%236c757d%22 font-size=%2220%22 font-family=%22Arial%2C sans-serif%22>Tidak ada foto</text></svg>';">
+                                        </div>
+                                        <div class="card-body">
+                                            <h6 class="fw-bold mb-1">
+                                                {{ $alat->nama ?? $alat->nama_alat ?? 'Alat #'.$alat->id }}
+                                            </h6>
+                                            <p class="small text-muted mb-2">
+                                                {{ $alat->kategori->nama ?? 'Tanpa kategori' }}
+                                            </p>
+                                            @php
+                                                $tersisa = max(0, ($alat->jumlah ?? 0) - ($alat->dipinjam_count ?? 0));
+                                            @endphp
+                                            <p class="small mb-2">
+                                                <span class="badge bg-light text-dark border">
+                                                    Stok tersisa: {{ $tersisa }}
+                                                </span>
+                                            </p>
+                                            @if($alat->keterangan)
+                                                <p class="small text-muted mb-3">
+                                                    {{ Str::limit($alat->keterangan, 120) }}
+                                                </p>
+                                            @endif
+                                            <a href="{{ route('user.peminjaman.create', ['alat_id' => $alat->id]) }}"
+                                               class="btn btn-primary btn-sm">
+                                                <i class="bi bi-bag-plus me-1"></i>Pinjam alat
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
-
-                        <!-- FOTO ALAT -->
-                        <div class="mb-3 text-center" id="foto-alat-wrapper" style="display:none;">
-                            <img id="foto-alat"
-                                 src=""
-                                 class="img-fluid rounded shadow-sm"
-                                 style="max-height:200px; object-fit:contain;"
-                                 alt="Foto Alat">
-                        </div>
-
-                        <!-- JUMLAH -->
-                        <div class="mb-3">
-                            <label class="form-label fw-medium">Jumlah</label>
-                            <input type="number" name="jumlah" min="1"
-                                value="{{ old('jumlah',1) }}"
-                                class="form-control @error('jumlah') is-invalid @enderror"
-                                required>
-                            @error('jumlah')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <!-- TANGGAL -->
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-medium">Tanggal Mulai</label>
-                                <input type="date" name="tanggal_mulai"
-                                    value="{{ old('tanggal_mulai', now()->toDateString()) }}"
-                                    class="form-control @error('tanggal_mulai') is-invalid @enderror"
-                                    required>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-medium">Tanggal Kembali</label>
-                                <input type="date" name="tanggal_selesai"
-                                    value="{{ old('tanggal_selesai') }}"
-                                    class="form-control @error('tanggal_selesai') is-invalid @enderror"
-                                    required>
-                            </div>
-                        </div>
-
-                        <!-- KETERANGAN -->
-                        <div class="mt-3">
-                            <label class="form-label fw-medium">Keterangan (Opsional)</label>
-                            <textarea name="keterangan" rows="3"
-                                class="form-control @error('keterangan') is-invalid @enderror">{{ old('keterangan') }}</textarea>
-                            <small class="text-muted">
-                                Tambahkan alasan atau kebutuhan peminjaman
-                            </small>
-                        </div>
-
-                        <!-- SUBMIT -->
-                        <button type="submit" class="btn btn-primary w-100 mt-4">
-                            <i class="bi bi-send me-2"></i>
-                            Ajukan Peminjaman
-                        </button>
-                    </form>
+                    @endif
                 </div>
             </div>
         </div>
-
-        <!-- INFO -->
-        <div class="col-12 col-lg-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-light border-0 py-3">
-                    <h6 class="fw-bold mb-0">
-                        <i class="bi bi-info-circle me-2"></i>
-                        Informasi
-                    </h6>
-                </div>
-
-                <div class="card-body p-4">
-                    <h6 class="fw-bold mb-2">Cara Mengajukan</h6>
-                    <ol class="small text-muted mb-4">
-                        <li>Pilih kategori</li>
-                        <li>Pilih alat</li>
-                        <li>Tentukan jumlah</li>
-                        <li>Atur tanggal</li>
-                        <li>Klik Ajukan Peminjaman</li>
-                    </ol>
-
-                    <hr>
-
-                    <h6 class="fw-bold mb-2">Status Peminjaman</h6>
-                    <ul class="list-unstyled small text-muted mb-0">
-                        <li class="mb-2">
-                            <span class="badge bg-warning text-dark me-1">Pending</span>
-                            Menunggu persetujuan
-                        </li>
-                        <li class="mb-2">
-                            <span class="badge bg-success me-1">Approved</span>
-                            Peminjaman disetujui
-                        </li>
-                        <li>
-                            <span class="badge bg-danger me-1">Rejected</span>
-                            Peminjaman ditolak
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>
 
-{{-- SCRIPT FILTER ALAT + FOTO --}}
+{{-- SCRIPT FILTER ALAT --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const kategori = document.getElementById('kategori_id');
-    const alat = document.getElementById('alat_id');
-    const fotoWrapper = document.getElementById('foto-alat-wrapper');
-    const foto = document.getElementById('foto-alat');
+    const cariAlat = document.getElementById('cari-alat');
+    const listAlatItems = document.querySelectorAll('.alat-item');
+    const filterKategori = document.getElementById('filter-kategori');
 
-    function filterAlat() {
-        const kategoriId = kategori.value;
-        alat.value = '';
-        fotoWrapper.style.display = 'none';
-
-        Array.from(alat.options).forEach(option => {
-            if (!option.value) return;
-
-            option.hidden = option.dataset.kategori !== kategoriId;
+    cariAlat?.addEventListener('input', (e) => {
+        const keyword = e.target.value.toLowerCase();
+        listAlatItems.forEach(item => {
+            const nama = item.dataset.nama || '';
+            const matchNama = nama.includes(keyword);
+            const matchKategori = !filterKategori?.value || item.dataset.kategori === filterKategori.value;
+            item.style.display = (matchNama && matchKategori) ? '' : 'none';
         });
+    });
 
-        alat.disabled = !kategoriId;
-    }
-
-    function tampilFoto() {
-        const selected = alat.options[alat.selectedIndex];
-        const fotoUrl = selected?.dataset?.foto;
-
-        if (fotoUrl) {
-            foto.src = fotoUrl;
-            fotoWrapper.style.display = 'block';
-        } else {
-            fotoWrapper.style.display = 'none';
-        }
-    }
-
-    filterAlat();
-    kategori.addEventListener('change', filterAlat);
-    alat.addEventListener('change', tampilFoto);
+    filterKategori?.addEventListener('change', () => {
+        const keyword = (cariAlat?.value || '').toLowerCase();
+        listAlatItems.forEach(item => {
+            const nama = item.dataset.nama || '';
+            const matchNama = nama.includes(keyword);
+            const matchKategori = !filterKategori.value || item.dataset.kategori === filterKategori.value;
+            item.style.display = (matchNama && matchKategori) ? '' : 'none';
+        });
+    });
 });
 </script>
 

@@ -42,6 +42,23 @@ class AdminController extends Controller
             ->latest()
             ->paginate(15);
 
-        return view('admin.denda', compact('dendaList'));
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+
+        $dendaSummary = Peminjaman::with('dendaSetter')
+            ->where('denda_amount', '>', 0)
+            ->whereMonth('updated_at', $currentMonth)
+            ->whereYear('updated_at', $currentYear)
+            ->select('denda_set_by',
+                DB::raw('SUM(denda_amount) as total_denda'),
+                DB::raw('COUNT(*) as total_kasus'),
+                DB::raw('MAX(updated_at) as terakhir'))
+            ->groupBy('denda_set_by')
+            ->get();
+
+        $dendaMonthTotal = $dendaSummary->sum('total_denda');
+        $dendaMonthCases = $dendaSummary->sum('total_kasus');
+
+        return view('admin.denda', compact('dendaList', 'dendaSummary', 'dendaMonthTotal', 'dendaMonthCases'));
     }
 }

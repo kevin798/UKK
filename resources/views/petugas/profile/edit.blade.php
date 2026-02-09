@@ -15,7 +15,7 @@
         </div>
 
         <!-- BUTTON KEMBALI -->
-        <a href="{{ route('admin.dashboard') }}"
+        <a href="{{ route('petugas.dashboard') }}"
            class="btn btn-outline-secondary btn-sm mt-1">
             <i class="bi bi-arrow-left me-1"></i>
             Kembali
@@ -27,8 +27,8 @@
 
             <x-profile.edit-form
                 :user="$user"
-                :action="route('admin.profile.update')"
-                :back-route="route('admin.dashboard')" />
+                :action="route('petugas.profile.update')"
+                :back-route="route('petugas.dashboard')" />
 
         </div>
     </div>

@@ -44,11 +44,16 @@ class ProfileController extends Controller
             $user->photo = $path;
         }
 
-        $user->update([
+        $data = [
             'name'    => $request->name,
             'phone'   => $request->phone,
             'address' => $request->address,
-        ]);
+        ];
+        if ($user->photo) {
+            $data['photo'] = $user->photo;
+        }
+
+        $user->update($data);
 
         // Redirect ke dashboard masing-masing role
         $redirectRoute = match($role) {

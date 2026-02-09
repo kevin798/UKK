@@ -4,13 +4,74 @@
 @section('content')
 <div class="container-fluid px-3 px-md-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
             <h4 class="fw-bold mb-1">Laporan Denda</h4>
-            <p class="text-muted small mb-0">Daftar denda yang ditetapkan petugas</p>
+            <p class="text-muted small mb-0">Rekap denda yang ditetapkan petugas</p>
         </div>
         <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">Kembali ke Dashboard</a>
     </div>
+
+    @isset($dendaSummary)
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted small mb-1">Total denda bulan ini</p>
+                    <h4 class="fw-bold text-danger mb-0">Rp {{ number_format($dendaMonthTotal ?? 0,0,',','.') }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted small mb-1">Kasus denda bulan ini</p>
+                    <h4 class="fw-bold mb-0">{{ $dendaMonthCases ?? 0 }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted small mb-1">Petugas terlibat</p>
+                    <h4 class="fw-bold mb-0">{{ $dendaSummary->count() }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endisset
+
+    @isset($dendaSummary)
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light border-0 py-3">
+            <h6 class="fw-bold mb-0">Rekap per Petugas (bulan ini)</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr class="text-uppercase small text-muted">
+                        <th>Petugas</th>
+                        <th>Total Denda</th>
+                        <th>Kasus</th>
+                        <th>Terakhir</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($dendaSummary as $row)
+                    <tr>
+                        <td>{{ $row->dendaSetter->name ?? 'Petugas#'.$row->denda_set_by }}</td>
+                        <td class="fw-bold text-danger">Rp {{ number_format($row->total_denda,0,',','.') }}</td>
+                        <td>{{ $row->total_kasus }}</td>
+                        <td>{{ \Carbon\Carbon::parse($row->terakhir)->format('d M Y H:i') }}</td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="4" class="text-center text-muted py-3">Tidak ada data bulan ini.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endisset
 
     @if($dendaList->count())
         <div class="card border-0 shadow-sm">
