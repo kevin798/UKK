@@ -28,7 +28,8 @@ class AdminSeeder extends Seeder
                 'name' => 'Petugas',
                 'password'=> bcrypt('petugas'),
                 'role' => 'petugas',
-            ]
+
+                ]
         );
     }
 }
