@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Peminjaman;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use App\Models\Alat;
 use App\Models\ActivityLog;
@@ -121,28 +120,39 @@ class PetugasController extends Controller
             return redirect()->back()->with('warning', 'Peminjaman tidak dalam status pending.');
         }
 
-        $alat = $peminjaman->alat;
-        if (!$alat) {
-            return redirect()->back()->with('error', 'Alat tidak ditemukan.');
+        try {
+            DB::transaction(function () use ($peminjaman) {
+                $alat = Alat::where('id', $peminjaman->alat_id)->lockForUpdate()->first();
+
+                if (!$alat) {
+                    throw new \RuntimeException('Alat tidak ditemukan.');
+                }
+
+                if ($peminjaman->jumlah > $alat->jumlah) {
+                    throw new \RuntimeException('Stok alat tidak mencukupi untuk disetujui.');
+                }
+
+                $alat->jumlah -= $peminjaman->jumlah;
+                $alat->save();
+
+                $peminjaman->update(['status' => 'approved']);
+
+                ActivityLog::create([
+                    'user_id' => auth()->id(),
+                    'activity' => 'Approve Peminjaman',
+                    'jumlah' => $peminjaman->jumlah,
+                    'tanggal_mulai' => $peminjaman->tanggal_mulai,
+                    'tanggal_selesai' => $peminjaman->tanggal_selesai,
+                    'description' => sprintf(
+                        'Menyetujui peminjaman alat %s untuk user #%s',
+                        $alat->nama ?? $alat->nama_alat ?? 'Alat#'.$alat->id,
+                        $peminjaman->user_id
+                    ),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
         }
-
-        DB::transaction(function () use ($peminjaman, $alat) {
-            // stok sudah dikurangi saat pengajuan, cukup set status
-            $peminjaman->update(['status' => 'approved']);
-
-            ActivityLog::create([
-                'user_id' => auth()->id(),
-                'activity' => 'Approve Peminjaman',
-                'jumlah' => $peminjaman->jumlah,
-                'tanggal_mulai' => $peminjaman->tanggal_mulai,
-                'tanggal_selesai' => $peminjaman->tanggal_selesai,
-                'description' => sprintf(
-                    'Menyetujui peminjaman alat %s untuk user #%s',
-                    $alat->nama ?? $alat->nama_alat ?? 'Alat#'.$alat->id,
-                    $peminjaman->user_id
-                ),
-            ]);
-        });
 
         return redirect()->back()->with('success', 'Peminjaman berhasil disetujui.');
     }
@@ -154,15 +164,8 @@ class PetugasController extends Controller
         ]);
 
         $peminjaman = Peminjaman::with('alat')->findOrFail($id);
-        $alat = $peminjaman->alat;
 
-        DB::transaction(function () use ($peminjaman, $validated, $alat) {
-            // Kembalikan stok yang sudah di-hold saat pengajuan
-            if ($alat) {
-                $alat->jumlah += $peminjaman->jumlah;
-                $alat->save();
-            }
-
+        DB::transaction(function () use ($peminjaman, $validated) {
             $peminjaman->update([
                 'status' => 'rejected',
                 'keterangan' => $validated['alasan'],

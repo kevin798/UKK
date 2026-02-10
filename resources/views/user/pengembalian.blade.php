@@ -59,7 +59,13 @@
                             <td>{{ $index + 1 }}</td>
                             <td>
                                 <strong>{{ $p->alat->nama ?? $p->alat->nama_alat ?? 'Alat #'.$p->alat_id }}</strong><br>
-                                <small class="text-muted">{{ $p->alat->kategori->nama ?? '-' }}</small>
+                                <small class="text-muted">
+                                    @forelse($p->alat->kategori as $kat)
+                                        <span class="badge bg-secondary me-1">{{ $kat->nama }}</span>
+                                    @empty
+                                        -
+                                    @endforelse
+                                </small>
                             </td>
                             <td>{{ $p->jumlah }}</td>
                             <td>{{ \Carbon\Carbon::parse($p->tanggal_mulai)->format('d/m/Y') }}</td>

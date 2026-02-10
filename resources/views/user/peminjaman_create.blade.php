@@ -34,7 +34,8 @@
                         <div class="mb-3">
                             <label class="form-label fw-medium">Kategori</label>
                             @php
-                                $presetKategoriId = request('alat_id') ? optional($alats->firstWhere('id', request('alat_id')))->kategori_id : null;
+                                $presetAlat = request('alat_id') ? $alats->firstWhere('id', request('alat_id')) : null;
+                                $presetKategoriId = optional(optional($presetAlat)->kategori->first())->id;
                             @endphp
                             <select name="kategori_id" id="kategori_id"
                                 class="form-select @error('kategori_id') is-invalid @enderror"
@@ -67,7 +68,7 @@
                                 <option value="">-- Pilih Alat --</option>
                                 @foreach($alats as $alat)
                                     <option value="{{ $alat->id }}"
-                                        data-kategori="{{ $alat->kategori_id }}"
+                                        data-kategori="{{ $alat->kategori->pluck('id')->join(',') }}"
                                         data-foto="{{ $alat->gambar ? asset('storage/'.$alat->gambar) : '' }}"
                                         data-stok="{{ $alat->jumlah }}"
                                         @selected(old('alat_id', $presetAlatId) == $alat->id)>
@@ -162,7 +163,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const kategoriId = kategori.value;
         Array.from(alat.options).forEach(option => {
             if (!option.value) return;
-            option.hidden = option.dataset.kategori !== kategoriId && kategoriId !== '';
+            const categories = (option.dataset.kategori || '').split(',').filter(Boolean);
+            option.hidden = kategoriId !== '' && !categories.includes(kategoriId);
         });
         // jika preset dari katalog, jangan ubah
         if (alat.hasAttribute('disabled')) {

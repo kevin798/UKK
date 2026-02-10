@@ -22,13 +22,12 @@ class PeminjamanController extends Controller
             ->latest()
             ->get();
 
-        $alats = Alat::withCount([
+        $alats = Alat::with('kategori')->withCount([
             'peminjaman as dipinjam_count' => function ($q) {
                 $q->whereIn('status', ['approved', 'return_requested']);
             },
         ])->get();
 
-        // ✅ TAMBAHKAN KATEGORI
         $kategori = Kategori::orderBy('nama')->get();
 
         return view('user.loans', compact('peminjamans', 'alats', 'kategori'));
@@ -49,13 +48,12 @@ class PeminjamanController extends Controller
 
     public function create()
     {
-        $alats = Alat::withCount([
+        $alats = Alat::with('kategori')->withCount([
             'peminjaman as dipinjam_count' => function ($q) {
                 $q->whereIn('status', ['approved', 'return_requested']);
             },
         ])->get();
 
-        // ✅ TAMBAHKAN KATEGORI
         $kategori = Kategori::orderBy('nama')->get();
 
         return view('user.peminjaman_create', compact('alats', 'kategori'));
@@ -66,7 +64,7 @@ class PeminjamanController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'kategori_id'     => ['required', 'exists:kategoris,id'], // ✅ WAJIB
+            'kategori_id'     => ['required', 'exists:kategoris,id'],
             'alat_id'         => ['required', 'exists:alats,id'],
             'jumlah'          => ['required', 'integer', 'min:1'],
             'tanggal_mulai'   => ['required', 'date'],
@@ -88,13 +86,9 @@ class PeminjamanController extends Controller
                     throw new \RuntimeException('Stok alat tidak mencukupi.');
                 }
 
-                // Kurangi stok saat permintaan dibuat agar langsung tercermin di katalog
-                $alat->jumlah -= $validated['jumlah'];
-                $alat->save();
-
                 Peminjaman::create([
                     'user_id'         => $user->id,
-                    'kategori_id'     => $validated['kategori_id'], // ✅ DISIMPAN
+                    'kategori_id'     => $validated['kategori_id'],
                     'alat_id'         => $validated['alat_id'],
                     'jumlah'          => $validated['jumlah'],
                     'tanggal_mulai'   => $validated['tanggal_mulai'],
@@ -131,7 +125,6 @@ class PeminjamanController extends Controller
     {
         $user = Auth::user();
 
-        // ✅ EAGER LOAD AGAR KATEGORI TAMPIL
         $peminjaman = Peminjaman::with(['alat.kategori', 'kategori'])
             ->where('id', $id)
             ->where('user_id', $user->id)

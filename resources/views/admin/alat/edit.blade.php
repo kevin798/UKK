@@ -30,17 +30,20 @@
 
                 <div class="mb-3">
                     <label for="kategori_id" class="form-label fw-medium">Kategori <span class="text-danger">*</span></label>
-                    <select id="kategori_id" name="kategori_id"
-                            class="form-select @error('kategori_id') is-invalid @enderror" required>
-                        <option value="">-- Pilih Kategori --</option>
+                    <select id="kategori_id" name="kategori_id[]"
+                            class="form-select @error('kategori_id') is-invalid @enderror" multiple required>
                         @foreach($kategori as $kat)
-                            <option value="{{ $kat->id }}" {{ old('kategori_id', $alat->kategori_id) == $kat->id ? 'selected' : '' }}>
+                            <option value="{{ $kat->id }}" {{ collect(old('kategori_id', $alat->kategori->pluck('id')))->contains($kat->id) ? 'selected' : '' }}>
                                 {{ $kat->nama }}
                             </option>
                         @endforeach
                     </select>
+                    <small class="text-muted">Pilih lebih dari satu jika diperlukan (Ctrl/Cmd + klik).</small>
                     @error('kategori_id')
-                        <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
+                    @error('kategori_id.*')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
                 </div>
 

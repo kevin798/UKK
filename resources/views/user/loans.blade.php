@@ -66,7 +66,7 @@
                                 @endphp
                                 <div class="col-12 col-md-6 col-xl-4 alat-item"
                                      data-nama="{{ Str::lower($alat->nama ?? $alat->nama_alat ?? 'Alat #'.$alat->id) }}"
-                                     data-kategori="{{ $alat->kategori_id }}">
+                                     data-kategori="{{ $alat->kategori->pluck('id')->join(',') }}">
                                     <div class="card h-100 border-0 shadow-sm">
                                         <div class="ratio ratio-4x3 bg-light rounded-top overflow-hidden">
                                             <img src="{{ $fotoAlat ?? '' }}"
@@ -80,7 +80,11 @@
                                                 {{ $alat->nama ?? $alat->nama_alat ?? 'Alat #'.$alat->id }}
                                             </h6>
                                             <p class="small text-muted mb-2">
-                                                {{ $alat->kategori->nama ?? 'Tanpa kategori' }}
+                                                @forelse($alat->kategori as $kat)
+                                                    <span class="badge bg-secondary me-1">{{ $kat->nama }}</span>
+                                                @empty
+                                                    Tanpa kategori
+                                                @endforelse
                                             </p>
                                             @php
                                                 $tersisa = $alat->jumlah ?? 0;
@@ -118,23 +122,27 @@ document.addEventListener('DOMContentLoaded', function () {
     const listAlatItems = document.querySelectorAll('.alat-item');
     const filterKategori = document.getElementById('filter-kategori');
 
+    const matchItem = (item, keyword, kategoriFilter) => {
+        const nama = item.dataset.nama || '';
+        const categories = (item.dataset.kategori || '').split(',').filter(Boolean);
+        const matchNama = nama.includes(keyword);
+        const matchKategori = !kategoriFilter || categories.includes(kategoriFilter);
+        return matchNama && matchKategori;
+    };
+
     cariAlat?.addEventListener('input', (e) => {
         const keyword = e.target.value.toLowerCase();
+        const kategoriFilter = filterKategori?.value || '';
         listAlatItems.forEach(item => {
-            const nama = item.dataset.nama || '';
-            const matchNama = nama.includes(keyword);
-            const matchKategori = !filterKategori?.value || item.dataset.kategori === filterKategori.value;
-            item.style.display = (matchNama && matchKategori) ? '' : 'none';
+            item.style.display = matchItem(item, keyword, kategoriFilter) ? '' : 'none';
         });
     });
 
     filterKategori?.addEventListener('change', () => {
         const keyword = (cariAlat?.value || '').toLowerCase();
+        const kategoriFilter = filterKategori.value || '';
         listAlatItems.forEach(item => {
-            const nama = item.dataset.nama || '';
-            const matchNama = nama.includes(keyword);
-            const matchKategori = !filterKategori.value || item.dataset.kategori === filterKategori.value;
-            item.style.display = (matchNama && matchKategori) ? '' : 'none';
+            item.style.display = matchItem(item, keyword, kategoriFilter) ? '' : 'none';
         });
     });
 });

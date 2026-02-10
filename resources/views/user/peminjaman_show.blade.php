@@ -36,7 +36,13 @@
                             </div>
                             <div>
                                 <span class="d-block text-muted small">Kategori</span>
-                                <p class="fw-bold">{{ $peminjaman->alat->kategori->nama ?? '-' }}</p>
+                                <p class="fw-bold">
+                                    @forelse($peminjaman->alat->kategori as $kat)
+                                        <span class="badge bg-secondary me-1">{{ $kat->nama }}</span>
+                                    @empty
+                                        -
+                                    @endforelse
+                                </p>
                             </div>
                         </div>
                         <div class="col-md-6">

@@ -11,8 +11,8 @@ class Kategori extends Model
         'deskripsi',
     ];
 
-    public function alat()
+    public function alats()
     {
-        return $this->hasMany(Alat::class);
+        return $this->belongsToMany(Alat::class, 'alat_kategori');
     }
 }

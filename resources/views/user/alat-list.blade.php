@@ -63,9 +63,11 @@
 
                             <!-- KATEGORI -->
                             <div class="mb-2">
-                                <span class="badge bg-secondary">
-                                    {{ $item->kategori->nama ?? '-' }}
-                                </span>
+                                @forelse($item->kategori as $kat)
+                                    <span class="badge bg-secondary me-1">{{ $kat->nama }}</span>
+                                @empty
+                                    <span class="text-muted">-</span>
+                                @endforelse
                             </div>
 
                             <!-- INFO ALAT -->

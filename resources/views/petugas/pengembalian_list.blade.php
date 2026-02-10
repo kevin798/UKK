@@ -44,7 +44,7 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr class="text-uppercase small text-muted">
-                            <th>#</th>
+                            <th>No</th>
                             <th>Peminjam</th>
                             <th>Alat</th>
                             <th>Jumlah</th>
@@ -142,10 +142,7 @@
 
                                             <div class="alert alert-warning d-flex align-items-center gap-2">
                                                 <i class="bi bi-clock-history fs-5"></i>
-                                                <div class="small mb-0">
-                                                    Keterlambatan: <strong>{{ $lateDays }} hari</strong>.
-                                                    Denda otomatis disarankan Rp {{ number_format($suggestedFine,0,',','.') }} (10.000/hari).
-                                                </div>
+
                                             </div>
 
                                             @php
@@ -180,8 +177,6 @@
                                                 <label class="form-label">Denda (Rp)</label>
                                                 <input type="number" step="0.01" min="0" name="denda_amount"
                                                        class="form-control" value="{{ $suggestedFine }}">
-                                                <small class="text-muted">Bisa disesuaikan; default 10.000/hari keterlambatan.</small>
-                                            </div>
 
                                             <div class="mb-3">
                                                 <label class="form-label">Keterangan / Alasan Denda</label>

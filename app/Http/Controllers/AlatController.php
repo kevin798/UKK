@@ -24,7 +24,9 @@ class AlatController extends Controller
 
         // Filter berdasarkan kategori jika ada
         if ($request->has('kategori_id') && $request->kategori_id) {
-            $query->where('kategori_id', $request->kategori_id);
+            $query->whereHas('kategori', function ($q) use ($request) {
+                $q->where('kategoris.id', $request->kategori_id);
+            });
         }
 
         $alat = $query->get();
@@ -43,19 +45,21 @@ class AlatController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255',
-            'kategori_id' => 'required|exists:kategoris,id',
+            'kategori_id' => 'required|array|min:1',
+            'kategori_id.*' => 'exists:kategoris,id',
             'jumlah' => 'required|integer|min:1',
             'keterangan' => 'nullable|string',
             'gambar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
         ]);
 
-        $data = $request->all();
+        $data = $request->except('kategori_id');
 
         if ($request->hasFile('gambar')) {
             $data['gambar'] = $request->file('gambar')->store('alat', 'public');
         }
 
         $alat = Alat::create($data);
+        $alat->kategori()->sync($request->kategori_id);
 
         ActivityLog::create([
             'user_id' => Auth::id(),
@@ -79,13 +83,14 @@ class AlatController extends Controller
         $oldJumlah = $alat->jumlah;
         $request->validate([
             'nama' => 'required|string|max:255',
-            'kategori_id' => 'required|exists:kategoris,id',
+            'kategori_id' => 'required|array|min:1',
+            'kategori_id.*' => 'exists:kategoris,id',
             'jumlah' => 'required|integer|min:1',
             'keterangan' => 'nullable|string',
             'gambar' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
         ]);
 
-        $data = $request->all();
+        $data = $request->except('kategori_id');
 
         if ($request->hasFile('gambar')) {
             if ($alat->gambar) {
@@ -95,6 +100,7 @@ class AlatController extends Controller
         }
 
         $alat->update($data);
+        $alat->kategori()->sync($request->kategori_id);
 
         ActivityLog::create([
             'user_id' => Auth::id(),

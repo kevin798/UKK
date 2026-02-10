@@ -62,7 +62,7 @@ class KategoriController extends Controller
         $kategori = Kategori::findOrFail($id);
         
         // Check if any alat uses this kategori
-        if (Alat::where('kategori_id', $kategori->id)->exists()) {
+        if ($kategori->alats()->exists()) {
             return redirect()->route('kategori.index')->with("error", "Kategori masih digunakan di alat");
         }
         
@@ -70,4 +70,3 @@ class KategoriController extends Controller
         return redirect()->route('kategori.index')->with("success", "Kategori berhasil dihapus");
     }
 }
-

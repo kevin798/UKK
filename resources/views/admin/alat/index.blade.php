@@ -71,7 +71,13 @@
                             <td class="fw-medium">{{ $item->nama }}</td>
 
                             <td>
-                                <span class="badge bg-secondary">{{ $item->kategori->nama ?? '-' }}</span>
+                                @if($item->kategori->isNotEmpty())
+                                    @foreach($item->kategori as $kat)
+                                        <span class="badge bg-secondary me-1">{{ $kat->nama }}</span>
+                                    @endforeach
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
                             </td>
 
                             <td>{{ $item->jumlah }}</td>
@@ -98,7 +104,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center py-4 text-muted">
+                            <td colspan="6" class="text-center py-4 text-muted">
                                 Tidak ada data alat
                             </td>
                         </tr>

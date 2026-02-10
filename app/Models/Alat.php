@@ -12,14 +12,13 @@ class Alat extends Model
     protected $fillable = [
         'nama',
         'jumlah',
-        'kategori_id',
         'keterangan',
         'gambar',
     ];
 
     public function kategori()
     {
-        return $this->belongsTo(Kategori::class);
+        return $this->belongsToMany(Kategori::class, 'alat_kategori');
     }
 
     public function peminjaman()
