@@ -117,9 +117,6 @@
                         </span>
                     </div>
 
-                    <span class="badge bg-success mt-3">
-                        {{ $approvedLoans ?? 0 }} Disetujui
-                    </span>
                 </div>
             </div>
         </div>

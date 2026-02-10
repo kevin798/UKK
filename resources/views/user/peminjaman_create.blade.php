@@ -17,7 +17,7 @@
 
     <div class="row g-4">
         <!-- FORM -->
-        <div class="col-12 col-lg-7">
+        <div class="col-12 col-lg-8 col-xl-6 mx-auto">
             <div class="card border-0 shadow-sm h-100" id="form-peminjaman">
                 <div class="card-header bg-light border-0 py-3">
                     <h6 class="fw-bold mb-0">
@@ -69,6 +69,7 @@
                                     <option value="{{ $alat->id }}"
                                         data-kategori="{{ $alat->kategori_id }}"
                                         data-foto="{{ $alat->gambar ? asset('storage/'.$alat->gambar) : '' }}"
+                                        data-stok="{{ $alat->jumlah }}"
                                         @selected(old('alat_id', $presetAlatId) == $alat->id)>
                                         {{ $alat->nama ?? $alat->nama_alat ?? 'Alat #'.$alat->id }}
                                     </option>
@@ -77,6 +78,7 @@
                             @if(request('alat_id'))
                                 <input type="hidden" name="alat_id" value="{{ $presetAlatId }}">
                             @endif
+                            <small id="stok-info" class="text-muted d-block mt-1">Stok tersisa: —</small>
                             @error('alat_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -94,7 +96,7 @@
                         <!-- JUMLAH -->
                         <div class="mb-3">
                             <label class="form-label fw-medium">Jumlah</label>
-                            <input type="number" name="jumlah" min="1"
+                            <input type="number" name="jumlah" id="jumlah" min="1"
                                 value="{{ old('jumlah',1) }}"
                                 class="form-control @error('jumlah') is-invalid @enderror"
                                 required>
@@ -142,47 +144,6 @@
             </div>
         </div>
 
-        <!-- INFO -->
-        <div class="col-12 col-lg-5">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-light border-0 py-3">
-                    <h6 class="fw-bold mb-0">
-                        <i class="bi bi-info-circle me-2"></i>
-                        Informasi
-                    </h6>
-                </div>
-
-                <div class="card-body p-4">
-                    <h6 class="fw-bold mb-2">Cara Mengajukan</h6>
-                    <ol class="small text-muted mb-4">
-                        <li>Pilih kategori</li>
-                        <li>Pilih alat</li>
-                        <li>Tentukan jumlah</li>
-                        <li>Atur tanggal</li>
-                        <li>Klik Ajukan Peminjaman</li>
-                    </ol>
-
-                    <hr>
-
-                    <h6 class="fw-bold mb-2">Status Peminjaman</h6>
-                    <ul class="list-unstyled small text-muted mb-0">
-                        <li class="mb-2">
-                            <span class="badge bg-warning text-dark me-1">Pending</span>
-                            Menunggu persetujuan
-                        </li>
-                        <li class="mb-2">
-                            <span class="badge bg-success me-1">Approved</span>
-                            Peminjaman disetujui
-                        </li>
-                        <li>
-                            <span class="badge bg-danger me-1">Rejected</span>
-                            Peminjaman ditolak
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>
 
@@ -193,6 +154,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const alat = document.getElementById('alat_id');
     const fotoWrapper = document.getElementById('foto-alat-wrapper');
     const foto = document.getElementById('foto-alat');
+    const jumlah = document.getElementById('jumlah');
+    const stokInfo = document.getElementById('stok-info');
     const placeholder = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="100%25" height="100%25" fill="%23f8f9fa"/><text x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%236c757d" font-size="24" font-family="Arial, sans-serif">Tidak ada foto</text></svg>';
 
     function filterAlat() {
@@ -214,12 +177,29 @@ document.addEventListener('DOMContentLoaded', function () {
         fotoWrapper.style.display = fotoUrl ? 'block' : 'block';
     }
 
+    function syncStok() {
+        const selected = alat.options[alat.selectedIndex];
+        const stok = Number(selected?.dataset?.stok || 0);
+        if (stok > 0) {
+            jumlah.max = stok;
+            if (!jumlah.value || jumlah.value < 1) jumlah.value = 1;
+            if (jumlah.value > stok) jumlah.value = stok;
+            stokInfo.textContent = `Stok tersisa: ${stok}`;
+            jumlah.disabled = false;
+        } else {
+            stokInfo.textContent = 'Stok tidak tersedia';
+            jumlah.value = '';
+            jumlah.disabled = true;
+        }
+    }
+
     kategori.addEventListener('change', filterAlat);
-    alat.addEventListener('change', tampilFoto);
+    alat.addEventListener('change', () => { tampilFoto(); syncStok(); });
 
     // init state
     filterAlat();
-    if (alat.value) tampilFoto();
+    if (alat.value) { tampilFoto(); }
+    syncStok();
 });
 </script>
 

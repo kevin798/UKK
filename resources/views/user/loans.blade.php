@@ -83,7 +83,7 @@
                                                 {{ $alat->kategori->nama ?? 'Tanpa kategori' }}
                                             </p>
                                             @php
-                                                $tersisa = max(0, ($alat->jumlah ?? 0) - ($alat->dipinjam_count ?? 0));
+                                                $tersisa = $alat->jumlah ?? 0;
                                             @endphp
                                             <p class="small mb-2">
                                                 <span class="badge bg-light text-dark border">
