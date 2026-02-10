@@ -126,10 +126,6 @@ class PetugasController extends Controller
             return redirect()->back()->with('error', 'Alat tidak ditemukan.');
         }
 
-        if ($alat->jumlah < $peminjaman->jumlah) {
-            return redirect()->back()->with('error', 'Stok alat tidak mencukupi untuk menyetujui peminjaman.');
-        }
-
         DB::transaction(function () use ($peminjaman, $alat) {
             // stok sudah dikurangi saat pengajuan, cukup set status
             $peminjaman->update(['status' => 'approved']);
