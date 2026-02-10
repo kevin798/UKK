@@ -74,54 +74,53 @@ class PeminjamanController extends Controller
             'keterangan'      => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $alat = Alat::find($validated['alat_id']);
-        if (!$alat) {
+        try {
+            DB::transaction(function () use ($validated, $user) {
+                $alat = Alat::where('id', $validated['alat_id'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$alat) {
+                    throw new \RuntimeException('Alat tidak ditemukan.');
+                }
+
+                if ($validated['jumlah'] > $alat->jumlah) {
+                    throw new \RuntimeException('Stok alat tidak mencukupi.');
+                }
+
+                // Kurangi stok saat permintaan dibuat agar langsung tercermin di katalog
+                $alat->jumlah -= $validated['jumlah'];
+                $alat->save();
+
+                Peminjaman::create([
+                    'user_id'         => $user->id,
+                    'kategori_id'     => $validated['kategori_id'], // ✅ DISIMPAN
+                    'alat_id'         => $validated['alat_id'],
+                    'jumlah'          => $validated['jumlah'],
+                    'tanggal_mulai'   => $validated['tanggal_mulai'],
+                    'tanggal_selesai' => $validated['tanggal_selesai'],
+                    'keterangan'      => $validated['keterangan'] ?? null,
+                    'status'          => 'pending',
+                ]);
+
+                ActivityLog::create([
+                    'user_id' => $user->id,
+                    'activity' => 'Ajukan Peminjaman',
+                    'jumlah' => $validated['jumlah'],
+                    'tanggal_mulai' => $validated['tanggal_mulai'],
+                    'tanggal_selesai' => $validated['tanggal_selesai'],
+                    'description' => sprintf(
+                        'Mengajukan peminjaman alat %s',
+                        $alat->nama ?? $alat->nama_alat ?? 'Alat#' . $alat->id
+                    ),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            $key = str_contains($e->getMessage(), 'tidak ditemukan') ? 'alat_id' : 'jumlah';
             return Redirect::back()
-                ->withErrors(['alat_id' => 'Alat tidak ditemukan.'])
+                ->withErrors([$key => $e->getMessage()])
                 ->withInput();
         }
-
-        if ($validated['jumlah'] > $alat->jumlah) {
-            return Redirect::back()
-                ->withErrors(['jumlah' => 'Stok alat tidak mencukupi.'])
-                ->withInput();
-        }
-
-        Peminjaman::create([
-            'user_id'         => $user->id,
-            'kategori_id'     => $validated['kategori_id'], // ✅ DISIMPAN
-            'alat_id'         => $validated['alat_id'],
-            'jumlah'          => $validated['jumlah'],
-            'tanggal_mulai'   => $validated['tanggal_mulai'],
-            'tanggal_selesai' => $validated['tanggal_selesai'],
-            'keterangan'      => $validated['keterangan'] ?? null,
-            'status'          => 'pending',
-        ]);
-
-        ActivityLog::create([
-            'user_id' => $user->id,
-            'activity' => 'Ajukan Peminjaman',
-            'jumlah' => $validated['jumlah'],
-            'tanggal_mulai' => $validated['tanggal_mulai'],
-            'tanggal_selesai' => $validated['tanggal_selesai'],
-            'description' => sprintf(
-                'Mengajukan peminjaman alat %s',
-                $alat->nama ?? $alat->nama_alat ?? 'Alat#' . $alat->id
-            ),
-        ]);
-
-        // Catat aktivitas pembuatan peminjaman
-        ActivityLog::create([
-            'user_id' => $user->id,
-            'activity' => 'Ajukan Peminjaman',
-            'jumlah' => $validated['jumlah'],
-            'tanggal_mulai' => $validated['tanggal_mulai'],
-            'tanggal_selesai' => $validated['tanggal_selesai'],
-            'description' => sprintf(
-                'Mengajukan peminjaman alat %s',
-                $alat->nama ?? $alat->nama_alat ?? 'Alat#'.$alat->id
-            ),
-        ]);
 
         return redirect()
             ->route('user.peminjaman')

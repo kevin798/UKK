@@ -131,10 +131,7 @@ class PetugasController extends Controller
         }
 
         DB::transaction(function () use ($peminjaman, $alat) {
-            // kurangi stok
-            $alat->jumlah = $alat->jumlah - $peminjaman->jumlah;
-            $alat->save();
-
+            // stok sudah dikurangi saat pengajuan, cukup set status
             $peminjaman->update(['status' => 'approved']);
 
             ActivityLog::create([
@@ -160,11 +157,21 @@ class PetugasController extends Controller
             'alasan' => 'required|string|max:500',
         ]);
 
-        $peminjaman = Peminjaman::findOrFail($id);
-        $peminjaman->update([
-            'status' => 'rejected',
-            'keterangan' => $validated['alasan'],
-        ]);
+        $peminjaman = Peminjaman::with('alat')->findOrFail($id);
+        $alat = $peminjaman->alat;
+
+        DB::transaction(function () use ($peminjaman, $validated, $alat) {
+            // Kembalikan stok yang sudah di-hold saat pengajuan
+            if ($alat) {
+                $alat->jumlah += $peminjaman->jumlah;
+                $alat->save();
+            }
+
+            $peminjaman->update([
+                'status' => 'rejected',
+                'keterangan' => $validated['alasan'],
+            ]);
+        });
 
         ActivityLog::create([
             'user_id' => auth()->id(),

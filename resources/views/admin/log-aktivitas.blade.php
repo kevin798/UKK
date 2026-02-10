@@ -9,10 +9,9 @@
             <h4 class="fw-bold mb-1">Log Aktivitas Admin</h4>
             <p class="text-muted small mb-0">Riwayat aktivitas yang dilakukan oleh admin</p>
         </div>
-        <form method="GET" class="d-flex gap-2">
-            <input type="text" name="q" value="{{ request('q') }}" class="form-control form-control-sm" placeholder="Cari pengguna/aktivitas">
-            <button class="btn btn-outline-primary btn-sm">Cari</button>
-        </form>
+                <span class="badge bg-primary text-white px-3 py-2 rounded-pill">
+            <i class="bi bi-clock-history me-1"></i> Riwayat
+        </span>
     </div>
 
     @if($logs->count())
