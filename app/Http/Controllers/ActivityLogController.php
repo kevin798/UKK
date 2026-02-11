@@ -19,12 +19,20 @@ class ActivityLogController extends Controller
         return view('user.log-aktivitas', compact('logs'));
     }
 
-    public function indexAdmin()
+    public function indexAdmin(Request $request)
     {
         $logs = ActivityLog::with('user')
-            ->whereHas('user', fn($q) => $q->where('role', 'admin'))
-            ->latest()
-            ->paginate(10);
+            ->whereHas('user', fn($q) => $q->whereIn('role', ['admin', 'petugas']));
+
+        if ($request->filled('start_date')) {
+            $logs->whereDate('created_at', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $logs->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        $logs = $logs->latest()->paginate(10)->appends($request->only('start_date', 'end_date'));
 
         return view('admin.log-aktivitas', compact('logs'));
     }

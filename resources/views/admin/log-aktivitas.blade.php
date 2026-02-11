@@ -4,24 +4,40 @@
 @section('content')
 <div class="container-fluid px-3 px-md-4">
 
-    <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
-            <h4 class="fw-bold mb-1">Log Aktivitas Admin</h4>
-            <p class="text-muted small mb-0">Riwayat aktivitas yang dilakukan oleh admin</p>
+            <h4 class="fw-bold mb-1">Log Aktivitas Admin & Petugas</h4>
+            <p class="text-muted small mb-0">Riwayat aktivitas yang dilakukan oleh admin maupun petugas</p>
         </div>
-                <span class="badge bg-primary text-white px-3 py-2 rounded-pill">
+        <span class="badge bg-primary text-white px-3 py-2 rounded-pill">
             <i class="bi bi-clock-history me-1"></i> Riwayat
         </span>
     </div>
 
     @if($logs->count())
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-light border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="card-header bg-light border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div>
                     <h6 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>Log Aktivitas</h6>
                     <p class="text-muted small mb-0">Pantau semua aksi dan status peminjaman</p>
                 </div>
-                <span class="badge bg-primary-subtle text-primary">Total {{ $logs->total() }}</span>
+                <div class="d-flex align-items-end gap-2 flex-wrap">
+                    <form method="GET" class="d-flex align-items-end gap-2 flex-wrap">
+                        <div>
+                            <label class="form-label small mb-1">Dari</label>
+                            <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control form-control-sm">
+                        </div>
+                        <div>
+                            <label class="form-label small mb-1">Sampai</label>
+                            <input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control form-control-sm">
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+                        @if(request()->hasAny(['start_date','end_date']))
+                            <a href="{{ route('admin.log-aktivitas') }}" class="btn btn-sm btn-secondary">Reset</a>
+                        @endif
+                    </form>
+                    <span class="badge bg-primary-subtle text-primary">Total {{ $logs->total() }}</span>
+                </div>
             </div>
 
             <div class="table-responsive">
@@ -29,10 +45,11 @@
                     <thead class="table-light">
                         <tr class="text-uppercase small text-muted">
                             <th>#</th>
-                            <th>Admin</th>
+                            <th>Pengguna</th>
+                            <th>Peran</th>
                             <th>Aktivitas</th>
                             <th>Jumlah</th>
-                            <th>Rentang Waktu</th>
+                            <th>Dibuat</th>
                             <th style="width:26%;">Catatan</th>
                             <th class="text-center">Detail</th>
                         </tr>
@@ -42,13 +59,10 @@
                         <tr>
                             <td>{{ $i + $logs->firstItem() }}</td>
                             <td>{{ $log->user->name ?? '-' }}</td>
+                            <td><span class="badge bg-secondary">{{ $log->user->role ?? '-' }}</span></td>
                             <td><span class="badge bg-primary-subtle text-primary">{{ $log->activity }}</span></td>
                             <td>{{ $log->jumlah ?? '-' }}</td>
-                            <td>
-                                {{ $log->tanggal_mulai ? \Carbon\Carbon::parse($log->tanggal_mulai)->format('d/m/Y') : '-' }}
-                                s/d
-                                {{ $log->tanggal_selesai ? \Carbon\Carbon::parse($log->tanggal_selesai)->format('d/m/Y') : '-' }}
-                            </td>
+                            <td>{{ $log->created_at->format('d M Y H:i') }}</td>
                             <td class="small text-muted" style="max-width:240px; white-space:pre-wrap; word-break:break-word; word-wrap:break-word;">
                                 {{ $log->description ?? '-' }}
                             </td>
@@ -60,7 +74,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">Tidak ada log aktivitas.</td>
+                            <td colspan="9" class="text-center text-muted py-4">Tidak ada log aktivitas.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -68,7 +82,14 @@
             </div>
 
             <div class="card-footer bg-white border-0">
-                {{ $logs->links() }}
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span class="text-muted small">
+                        Menampilkan {{ $logs->firstItem() ?? 0 }}-{{ $logs->lastItem() ?? 0 }} dari {{ $logs->total() }} entri
+                    </span>
+                    <div class="ms-auto">
+                        {{ $logs->onEachSide(1)->links('pagination::bootstrap-5') }}
+                    </div>
+                </div>
             </div>
         </div>
     @else

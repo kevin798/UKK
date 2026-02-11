@@ -28,16 +28,21 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="kategori_id" class="form-label fw-medium">Kategori <span class="text-danger">*</span></label>
-                    <select id="kategori_id" name="kategori_id[]"
-                            class="form-select @error('kategori_id') is-invalid @enderror" multiple required>
+                    <label class="form-label fw-medium">Kategori <span class="text-danger">*</span></label>
+                    <div class="d-flex flex-wrap gap-3">
                         @foreach($kategori as $kat)
-                            <option value="{{ $kat->id }}" {{ collect(old('kategori_id', []))->contains($kat->id) ? 'selected' : '' }}>
-                                {{ $kat->nama }}
-                            </option>
+                            <div class="form-check">
+                                <input class="form-check-input @error('kategori_id') is-invalid @enderror"
+                                       type="checkbox"
+                                       id="kat-{{ $kat->id }}"
+                                       name="kategori_id[]"
+                                       value="{{ $kat->id }}"
+                                       @checked(collect(old('kategori_id', []))->contains($kat->id))>
+                                <label class="form-check-label" for="kat-{{ $kat->id }}">{{ $kat->nama }}</label>
+                            </div>
                         @endforeach
-                    </select>
-                    <small class="text-muted">Pilih lebih dari satu jika diperlukan (Ctrl/Cmd + klik).</small>
+                    </div>
+                    <small class="text-muted d-block mt-1">Boleh pilih lebih dari satu.</small>
                     @error('kategori_id')
                         <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
